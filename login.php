@@ -1,0 +1,17 @@
+<?php
+require 'includes/db.php';     // Connect to DB
+include 'includes/header.php'; // Load design & nav
+?>
+
+<h1>Welcome to Login Page</h1>
+<form>
+    <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="username">
+    </div>
+    <button class="btn btn-primary">Login</button>
+</form>
+
+<?php
+include 'includes/footer.php'; // Close design
+?>
