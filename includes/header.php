@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Check login status
 $is_logged_in = isset($_SESSION['user_id']);
-$role = $_SESSION['role'] ?? 'admin';
+$role = $_SESSION['role'] ?? 'guest';
 
 // FETCH CATEGORIES FOR MENU
 // We need the DB connection. Check if $pdo exists, if not, require it.
