@@ -12,8 +12,12 @@ body {
     background-color: #f5f5f7;
     color: #1d1d1f;
     height: 100vh;
-    overflow: hidden;
-    /* Prevent body scroll, let content scroll */
+    overflow: hidden; /* Prevent body scroll, let main-content scroll */
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
 }
 
 /* =========================================
@@ -46,7 +50,6 @@ body {
     padding-left: 15px;
 }
 
-/* MENU LINKS */
 .sidebar-menu {
     list-style: none;
 }
@@ -56,8 +59,9 @@ body {
 }
 
 .sidebar-menu a {
-    display: block;
-    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     color: #424245;
     font-size: 14px;
     font-weight: 500;
@@ -66,24 +70,39 @@ body {
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+.sidebar-menu a .icon {
+    font-size: 16px;
+    color: #86868b;
+    transition: color 0.2s ease;
+}
+
 .sidebar-menu a:hover {
     background-color: #f5f5f7;
     color: #1d1d1f;
 }
 
+.sidebar-menu a:hover .icon {
+    color: #1d1d1f;
+}
+
 .sidebar-menu a.active {
-    background-color: #0071e3;
-    /* Apple Blue */
+    background-color: #0071e3; /* Apple Blue */
     color: #ffffff;
+}
+
+.sidebar-menu a.active .icon {
+    color: #ffffff;
+    background-color: white; /* For mask icons to show white */
 }
 
 /* LOGOUT STYLE */
 .logout-link {
     margin-top: 20px;
-    color: #ff3b30 !important;
-    /* Apple Red */
+    color: #ff3b30 !important; /* Apple Red */
 }
-
+.logout-link .icon {
+    background-color: #ff3b30 !important;
+}
 .logout-link:hover {
     background-color: #fff2f1 !important;
 }
@@ -95,10 +114,11 @@ body {
     flex-grow: 1;
     padding: 40px;
     overflow-y: auto;
+    position: relative;
 }
 
 /* =========================================
-   5. PAGE COMPONENTS (Headers, Buttons)
+   5. PAGE HEADERS & GLOBAL LINKS
    ========================================= */
 .page-header {
     display: flex;
@@ -113,27 +133,190 @@ body {
     color: #1d1d1f;
 }
 
-/* Primary Button */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    color: #6e6e73;
+    font-size: 14px;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.back-link:hover {
+    color: #0071e3;
+}
+
+.back-link .icon {
+    margin-right: 6px;
+    width: 12px;
+    height: 12px;
+    background-color: currentColor;
+}
+
+/* =========================================
+   6. GLOBAL BUTTONS
+   ========================================= */
 .btn-primary {
     background-color: #0071e3;
     color: white;
     padding: 8px 16px;
     border-radius: 6px;
-    text-decoration: none;
     font-size: 14px;
     font-weight: 500;
-    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    transition: background-color 0.2s;
 }
 
 .btn-primary:hover {
     background-color: #005bb5;
 }
 
+.btn-cancel, .btn-secondary {
+    background-color: white;
+    color: #1d1d1f;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid #d2d2d7;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-cancel:hover, .btn-secondary:hover {
+    background-color: #f5f5f7;
+    text-decoration: none;
+}
+
+.btn-danger {
+    color: #ff3b30;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-danger:hover {
+    text-decoration: underline;
+}
+
 /* =========================================
-   6. TABS & FILTERS
+   7. GLOBAL CARDS
+   ========================================= */
+.card {
+    background: white;
+    border: 1px solid #d2d2d7;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.card-header {
+    background-color: #f5f5f7;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1d1d1f;
+    border-bottom: 1px solid #d2d2d7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* =========================================
+   8. GLOBAL FORM STYLES
+   ========================================= */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 13px;
+    color: #1d1d1f;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1d1d1f;
+    outline: none;
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Hides the default dropdown arrow so we can use custom icons */
+.form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 32px; /* Space for the icon */
+    cursor: pointer;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    border-color: #0071e3;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+}
+
+.form-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.helper-text {
+    font-size: 12px;
+    color: #86868b;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Error/Success Boxes */
+.error-box {
+    background-color: #fff2f2;
+    border: 1px solid #ffcfcf;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    color: #d60000;
+    font-size: 14px;
+}
+
+/* Form Actions Container (Bottom Buttons) */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e5ea;
+}
+
+/* =========================================
+   9. TABS & FILTERS (List Pages)
    ========================================= */
 .tabs-container {
     border-bottom: 1px solid #d2d2d7;
@@ -144,7 +327,6 @@ body {
 
 .tab-link {
     padding-bottom: 10px;
-    text-decoration: none;
     color: #6e6e73;
     font-size: 14px;
     font-weight: 500;
@@ -152,6 +334,10 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.tab-link:hover {
+    color: #1d1d1f;
 }
 
 .tab-link.active {
@@ -172,16 +358,16 @@ body {
 .count-badge {
     background-color: #e5e5ea;
     color: #6e6e73;
-    padding: 1px 6px;
-    border-radius: 10px;
+    padding: 2px 8px;
+    border-radius: 12px;
     font-size: 11px;
-    margin-left: 4px;
 }
 
-/* --- Filter Bar Layout --- */
+/* Filter Bar */
 .filter-bar {
     margin-bottom: 20px;
-    background: transparent;
+    display: flex;
+    align-items: center;
 }
 
 .filter-form {
@@ -196,100 +382,63 @@ body {
     min-width: 180px;
 }
 
-/* --- Search Input (Clickable Icon) --- */
+/* Custom Icon Positioning for Dropdowns */
+.icon-right {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #86868b;
+    pointer-events: none; /* Clicks pass through to select */
+    z-index: 2;
+}
+
+/* Hover effect for the icon when hovering the group */
+.filter-group:hover .icon-right {
+    color: #1d1d1f;
+}
+
 .search-group {
     min-width: 250px;
 }
 
+/* Search specific overrides */
 .search-submit-btn {
     position: absolute;
-    left: 2px;
-    top: 2px;
-    bottom: 2px;
-    width: 35px;
-    background: transparent;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
     border: none;
     cursor: pointer;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     color: #86868b;
-    border-radius: 4px;
+    padding: 4px;
 }
 
 .search-submit-btn:hover {
     color: #0071e3;
-    background-color: rgba(0, 0, 0, 0.02);
 }
 
 .search-input-field {
-    padding-left: 40px !important; /* Keeps space for the Search Button */
+    padding-left: 36px; /* Space for icon */
 }
 
-/* --- Category Select --- */
-.filter-input,
-.filter-select {
-    width: 100%;
-    height: 40px;
-    padding: 10px 12px; /* Reduced padding since icons are gone */
-    border: 1px solid #d2d2d7;
-    border-radius: 6px;
-    font-size: 14px;
-    color: #1d1d1f;
-    background-color: white;
-    outline: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    cursor: pointer;
-}
-
-.icon-left {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #86868b;
-    font-size: 14px;
-    pointer-events: none;
-    z-index: 2;
-}
-
-.icon-right {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #86868b;
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 2;
-}
-
-/* --- Price Toggle & Inputs --- */
-.price-toggle-group {
-    min-width: 200px;
-}
+/* Price Filters */
+.price-toggle-group { min-width: 200px; }
 
 .price-trigger-btn {
     width: 100%;
-    height: 40px;
+    height: 40px; /* Match input height */
     background: white;
     border: 1px solid #d2d2d7;
     border-radius: 6px;
     padding: 0 12px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
     font-size: 14px;
     color: #1d1d1f;
     cursor: pointer;
-    text-align: left;
-}
-
-.price-trigger-btn:hover {
-    border-color: #86868b;
 }
 
 .direct-inputs-wrapper {
@@ -300,7 +449,6 @@ body {
     border-radius: 6px;
     height: 40px;
     width: 100%;
-    padding-right: 10px;
 }
 
 .btn-close-price {
@@ -309,16 +457,9 @@ body {
     font-size: 18px;
     color: #86868b;
     cursor: pointer;
-    padding: 0 8px;
+    padding: 0 10px;
     height: 100%;
-    display: flex;
-    align-items: center;
     border-right: 1px solid #e5e5ea;
-    margin-right: 5px;
-}
-
-.btn-close-price:hover {
-    color: #ff3b30;
 }
 
 .direct-input {
@@ -329,32 +470,11 @@ body {
     font-size: 14px;
     color: #1d1d1f;
     text-align: center;
-    padding: 0;
-    -moz-appearance: textfield;
-}
-
-.direct-input::-webkit-outer-spin-button,
-.direct-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.direct-separator {
-    color: #86868b;
     padding: 0 5px;
-    font-weight: 600;
-}
-
-/* Common Focus State */
-.filter-select:focus,
-.price-trigger-btn:focus,
-.filter-input:focus {
-    border-color: #0071e3;
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
 }
 
 /* =========================================
-   7. DATA TABLES
+   10. DATA TABLES
    ========================================= */
 .data-table {
     width: 100%;
@@ -364,6 +484,7 @@ body {
     border-radius: 8px;
     border: 1px solid #d2d2d7;
     overflow: hidden;
+    margin-bottom: 20px;
 }
 
 .data-table th {
@@ -388,7 +509,11 @@ body {
     border-bottom: none;
 }
 
-/* Product/Category Thumbnails & Info */
+.data-table tr:hover td {
+    background-color: #fafafa;
+}
+
+/* Table Image Cells */
 .product-cell {
     display: flex;
     align-items: center;
@@ -404,8 +529,30 @@ body {
     background-color: #f5f5f7;
 }
 
+/* Action Buttons in Table */
+.action-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px;
+    margin-right: 4px;
+    color: #6e6e73;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background-color: #f5f5f7;
+}
+
+.edit-btn:hover { color: #0071e3; }
+.delete-btn:hover { color: #ff3b30; }
+
 /* =========================================
-   8. ACTIONS & STATUS TOGGLES
+   11. TOGGLE SWITCHES
    ========================================= */
 .status-wrapper {
     display: flex;
@@ -413,13 +560,6 @@ body {
     gap: 10px;
 }
 
-.status-text {
-    font-size: 14px;
-    color: #1d1d1f;
-    min-width: 60px;
-}
-
-/* iOS Style Toggle Switch */
 .status-toggle {
     position: relative;
     display: inline-block;
@@ -441,7 +581,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: #e5e5ea;
     transition: .4s;
     border-radius: 20px;
 }
@@ -456,40 +596,91 @@ body {
     background-color: white;
     transition: .4s;
     border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
-input:checked+.slider {
+input:checked + .slider {
     background-color: #0071e3;
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
     transform: translateX(16px);
 }
 
-/* Action Buttons (Edit/Delete) */
-.action-btn {
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 6px;
-    margin-right: 4px;
-    color: #6e6e73;
-    transition: color 0.2s;
-    border-radius: 4px;
-    text-decoration: none;
-    display: inline-flex;
+.status-text {
+    font-size: 13px;
+    min-width: 65px;
+}
+
+/* =========================================
+   12. GLOBAL MODALS
+   ========================================= */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal-box {
+    background: white;
+    width: 900px;
+    max-width: 95%;
+    max-height: 85%;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e5ea;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
 }
 
-.action-btn:hover {
-    background-color: #f5f5f7;
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
 }
 
-.edit-btn:hover {
-    color: #0071e3;
+.btn-close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #86868b;
 }
 
-.delete-btn:hover {
-    color: #ff3b30;
+.btn-close-modal:hover { color: #1d1d1f; }
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e5e5ea;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: #fff;
+    border-radius: 0 0 12px 12px;
 }

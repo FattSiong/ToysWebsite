@@ -40,8 +40,8 @@ include 'admin_header.php';
             <button type="button" class="search-submit-btn" onclick="this.form.submit()" title="Click to Search">
                 <i class="icon fa-search"></i>
             </button>
-            <input type="text" name="search" class="filter-input search-input-field"
-                   placeholder="Search category..."
+            <input type="text" name="search" class="form-input search-input-field"
+                   placeholder="Search Category"
                    value="<?= htmlspecialchars($search_query) ?>">
         </div>
     </form>
@@ -57,7 +57,7 @@ include 'admin_header.php';
             <th>Category</th>
 
             <!-- 3. Product Quantity Column -->
-            <th>Product Quantity</th>
+            <th>Product quantity</th>
 
             <!-- 4. Action Column -->
             <th>Action</th>
@@ -78,11 +78,7 @@ include 'admin_header.php';
                         <?php endif; ?>
                     </td>
 
-                    <td>
-                        <span class="count-badge">
-                            <?= $row['product_count'] ?> Products
-                        </span>
-                    </td>
+                    <td><?= $row['product_count'] ?></td>
 
                     <td>
                         <a href="category_form.php?id=<?= $row['category_id'] ?>" class="action-btn edit-btn" title="Edit">

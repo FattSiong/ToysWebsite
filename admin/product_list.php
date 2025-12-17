@@ -147,13 +147,13 @@ include 'admin_header.php';
             <button type="button" class="search-submit-btn" onclick="this.form.submit()" title="Click to Filter">
                 <i class="icon fa-search"></i>
             </button>
-            <input type="text" name="search" class="filter-input search-input-field"
-                placeholder="Search product..."
+            <input type="text" name="search" class="form-input search-input-field"
+                placeholder="Search Product"
                 value="<?= htmlspecialchars($search_query) ?>">
         </div>
 
         <div class="filter-group">
-            <select name="category" class="filter-select" onchange="this.form.submit()">
+            <select name="category" class="form-select" onchange="this.form.submit()">
                 <option value="">Category</option>
                 <?php foreach ($categories as $cat): ?>
                     <option value="<?= $cat['category_id'] ?>" <?= $category_filter == $cat['category_id'] ? 'selected' : '' ?>>

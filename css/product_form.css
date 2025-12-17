@@ -1,6 +1,9 @@
 /* css/product_form.css */
+/* Contains styles ONLY for product_form.php specific elements.
+   Global form styles (inputs, cards, buttons) are in admin.css.
+*/
 
-/* --- LAYOUT --- */
+/* --- PAGE LAYOUT --- */
 .product-form {
     display: flex;
     flex-wrap: wrap;
@@ -18,55 +21,24 @@
     min-width: 250px;
 }
 
-/* --- CARDS --- */
-.card {
-    background: white;
-    border: 1px solid #d2d2d7;
-    border-radius: 8px;
-    margin-bottom: 24px;
-    overflow: hidden;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-.card-header {
-    background-color: #f5f5f7;
-    padding: 12px 20px;
-    font-size: 15px;
-    font-weight: 600;
-    color: #1d1d1f;
-    border-bottom: 1px solid #d2d2d7;
-}
-
-.card-body {
-    padding: 20px;
-}
-
-/* --- MEDIA STYLES --- */
+/* --- MEDIA UPLOADER (Specific to Product Form) --- */
 .media-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: white;
-    padding: 15px 20px 0px;
-    border-bottom: none;
-}
-
-.media-title {
-    font-weight: 600;
-    color: #1d1d1f;
-    font-size: 15px;
+    padding-bottom: 0; /* Override generic card padding if needed */
 }
 
 .media-upload-box {
     display: block;
     border: 1px dashed #d2d2d7;
-    border-radius: 4px;
-    padding: 60px 0;
+    border-radius: 6px;
+    padding: 40px 20px;
     text-align: center;
     cursor: pointer;
-    transition: border-color 0.2s, background-color 0.2s, transform 0.2s;
+    transition: all 0.2s;
     background-color: #fafafa;
-    margin-bottom: 12px;
+    margin-bottom: 15px;
 }
 
 .media-upload-box:hover {
@@ -75,9 +47,9 @@
 }
 
 .media-upload-box.drag-over {
-    border-color: #007bff;
-    background-color: #e9f5ff;
-    transform: scale(1.02);
+    border-color: #0071e3;
+    background-color: #e6f0ff;
+    transform: scale(1.01);
 }
 
 .upload-content {
@@ -87,35 +59,32 @@
 }
 
 .plus-sign {
-    font-size: 48px;
+    font-size: 40px;
     font-weight: 300;
-    color: #424245;
-    line-height: 1;
+    color: #86868b;
     margin-bottom: 8px;
 }
 
 .media-footer-text {
     font-size: 12px;
     color: #86868b;
-    line-height: 1.5;
 }
 
 /* --- PREVIEW GRID --- */
 .media-preview-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
+    gap: 12px;
     margin-top: 15px;
 }
 
 .preview-item {
     position: relative;
-    width: 100%;
-    height: 100px;
-    border-radius: 8px;
+    aspect-ratio: 1;
+    border-radius: 6px;
     overflow: hidden;
-    border: 1px solid #ddd;
-    background: #f9f9f9;
+    border: 1px solid #e5e5ea;
+    background: #fff;
 }
 
 .preview-item img,
@@ -125,10 +94,11 @@
     object-fit: cover;
 }
 
+/* Badges & Overlays */
 .preview-type-badge {
     position: absolute;
-    bottom: 5px;
-    right: 5px;
+    bottom: 4px;
+    right: 4px;
     background: rgba(0, 0, 0, 0.6);
     color: #fff;
     font-size: 10px;
@@ -136,40 +106,31 @@
     border-radius: 4px;
 }
 
-/* REMOVE BUTTON */
 .preview-remove-btn {
     position: absolute;
     top: 4px;
     right: 4px;
-    background: rgba(255, 0, 0, 0.8);
+    background: rgba(255, 59, 48, 0.9);
     color: white;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    text-align: center;
-    line-height: 18px;
-    font-size: 14px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    z-index: 10;
     border: none;
-    padding: 0;
-    font-weight: bold;
+    font-size: 12px;
+    z-index: 10;
+    transition: transform 0.2s;
 }
 
 .preview-remove-btn:hover {
-    background: red;
+    transform: scale(1.1);
+    background: #ff3b30;
 }
 
-.existing-label {
-    margin-top: 20px;
-    margin-bottom: 5px;
-    font-weight: bold;
-    font-size: 0.9em;
-    color: #666;
-    display: block;
-}
-
-/* --- PRIMARY SELECTION (STAR) --- */
+/* Primary Selection (Star) */
 .primary-select-overlay {
     position: absolute;
     top: 4px;
@@ -180,172 +141,24 @@
 
 .primary-select-overlay input {
     display: none;
-    /* Hide default radio */
 }
 
 .star-icon {
-    font-size: 20px;
+    font-size: 18px;
     color: white;
-    text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
     transition: color 0.2s;
-    user-select: none;
-}
-
-/* When Checked */
-.primary-select-overlay input:checked+.star-icon {
-    color: #ffc107;
-    /* Gold/Yellow */
-    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
-}
-
-/* Hover state */
-.primary-select-overlay:hover .star-icon {
-    color: #ffdb73;
-}
-
-/* --- FORM ELEMENTS (Standard) --- */
-.form-group {
-    margin-bottom: 16px;
-}
-
-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    color: #1d1d1f;
-    margin-bottom: 6px;
-}
-
-.form-input,
-.form-select,
-.form-textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #d2d2d7;
-    border-radius: 6px;
-    font-size: 14px;
-    color: #1d1d1f;
-    outline: none;
-}
-
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
-    border-color: #0071e3;
-}
-
-.form-textarea {
-    min-height: 120px;
-    resize: vertical;
-}
-
-.helper-text {
-    font-size: 12px;
-    color: #86868b;
-    text-align: right;
-}
-
-/* STATUS TOGGLE */
-.status-control {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.status-toggle {
-    position: relative;
-    width: 36px;
-    height: 20px;
-}
-
-.status-toggle input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    border-radius: 20px;
-    transition: .4s;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
+    background-color: rgba(0,0,0,0.2);
     border-radius: 50%;
-    transition: .4s;
+    padding: 2px;
 }
 
-input:checked+.slider {
-    background-color: #0071e3;
-}
-
-input:checked+.slider:before {
-    transform: translateX(16px);
-}
-
-/* BUTTONS */
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.btn-primary {
-    background-color: #0071e3;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 6px;
-    border: none;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.btn-primary:hover {
-    background-color: #005bb5;
-}
-
-.btn-cancel {
+.primary-select-overlay input:checked + .star-icon {
+    color: #ffc107; /* Gold */
     background-color: white;
-    color: #1d1d1f;
-    padding: 10px 20px;
-    border-radius: 6px;
-    border: 1px solid #d2d2d7;
-    text-decoration: none;
+    text-shadow: none;
 }
 
-.btn-cancel:hover {
-    background-color: #f5f5f7;
-}
-
-/* HEADER */
-.form-page-header {
-    margin-bottom: 20px;
-}
-
-.back-link {
-    display: inline-flex;
-    align-items: center;
-    color: #6e6e73;
-    text-decoration: none;
-    font-size: 14px;
-    margin-bottom: 8px;
-}
-
-.back-link .icon {
-    width: 12px;
-    height: 12px;
-    margin-right: 6px;
+.primary-select-overlay:hover .star-icon {
+    color: #ffe082;
 }
