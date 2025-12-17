@@ -1,0 +1,495 @@
+/* =========================================
+   1. RESET & BASICS
+   ========================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f5f5f7;
+    color: #1d1d1f;
+    height: 100vh;
+    overflow: hidden;
+    /* Prevent body scroll, let content scroll */
+}
+
+/* =========================================
+   2. LAYOUT WRAPPER
+   ========================================= */
+.admin-wrapper {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+/* =========================================
+   3. SIDEBAR STYLING
+   ========================================= */
+.sidebar {
+    width: 260px;
+    background-color: #ffffff;
+    border-right: 1px solid #d2d2d7;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 10px;
+    flex-shrink: 0;
+}
+
+.sidebar-header h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 30px;
+    padding-left: 15px;
+}
+
+/* MENU LINKS */
+.sidebar-menu {
+    list-style: none;
+}
+
+.sidebar-menu li {
+    margin-bottom: 4px;
+}
+
+.sidebar-menu a {
+    display: block;
+    text-decoration: none;
+    color: #424245;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-menu a:hover {
+    background-color: #f5f5f7;
+    color: #1d1d1f;
+}
+
+.sidebar-menu a.active {
+    background-color: #0071e3;
+    /* Apple Blue */
+    color: #ffffff;
+}
+
+/* LOGOUT STYLE */
+.logout-link {
+    margin-top: 20px;
+    color: #ff3b30 !important;
+    /* Apple Red */
+}
+
+.logout-link:hover {
+    background-color: #fff2f1 !important;
+}
+
+/* =========================================
+   4. MAIN CONTENT AREA
+   ========================================= */
+.main-content {
+    flex-grow: 1;
+    padding: 40px;
+    overflow-y: auto;
+}
+
+/* =========================================
+   5. PAGE COMPONENTS (Headers, Buttons)
+   ========================================= */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+/* Primary Button */
+.btn-primary {
+    background-color: #0071e3;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary:hover {
+    background-color: #005bb5;
+}
+
+/* =========================================
+   6. TABS & FILTERS
+   ========================================= */
+.tabs-container {
+    border-bottom: 1px solid #d2d2d7;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+}
+
+.tab-link {
+    padding-bottom: 10px;
+    text-decoration: none;
+    color: #6e6e73;
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tab-link.active {
+    color: #0071e3;
+    font-weight: 600;
+}
+
+.tab-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #0071e3;
+}
+
+.count-badge {
+    background-color: #e5e5ea;
+    color: #6e6e73;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-left: 4px;
+}
+
+/* --- Filter Bar Layout --- */
+.filter-bar {
+    margin-bottom: 20px;
+    background: transparent;
+}
+
+.filter-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+}
+
+.filter-group {
+    position: relative;
+    min-width: 180px;
+}
+
+/* --- Search Input (Clickable Icon) --- */
+.search-group {
+    min-width: 250px;
+}
+
+.search-submit-btn {
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    bottom: 2px;
+    width: 35px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #86868b;
+    border-radius: 4px;
+}
+
+.search-submit-btn:hover {
+    color: #0071e3;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.search-input-field {
+    padding-left: 40px !important; /* Keeps space for the Search Button */
+}
+
+/* --- Category Select --- */
+.filter-input,
+.filter-select {
+    width: 100%;
+    height: 40px;
+    padding: 10px 12px; /* Reduced padding since icons are gone */
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1d1d1f;
+    background-color: white;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.icon-left {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #86868b;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.icon-right {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #86868b;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* --- Price Toggle & Inputs --- */
+.price-toggle-group {
+    min-width: 200px;
+}
+
+.price-trigger-btn {
+    width: 100%;
+    height: 40px;
+    background: white;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #1d1d1f;
+    cursor: pointer;
+    text-align: left;
+}
+
+.price-trigger-btn:hover {
+    border-color: #86868b;
+}
+
+.direct-inputs-wrapper {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #0071e3;
+    border-radius: 6px;
+    height: 40px;
+    width: 100%;
+    padding-right: 10px;
+}
+
+.btn-close-price {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #86868b;
+    cursor: pointer;
+    padding: 0 8px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    border-right: 1px solid #e5e5ea;
+    margin-right: 5px;
+}
+
+.btn-close-price:hover {
+    color: #ff3b30;
+}
+
+.direct-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: #1d1d1f;
+    text-align: center;
+    padding: 0;
+    -moz-appearance: textfield;
+}
+
+.direct-input::-webkit-outer-spin-button,
+.direct-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.direct-separator {
+    color: #86868b;
+    padding: 0 5px;
+    font-weight: 600;
+}
+
+/* Common Focus State */
+.filter-select:focus,
+.price-trigger-btn:focus,
+.filter-input:focus {
+    border-color: #0071e3;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+}
+
+/* =========================================
+   7. DATA TABLES
+   ========================================= */
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #d2d2d7;
+    overflow: hidden;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background-color: #f5f5f7;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6e6e73;
+    border-bottom: 1px solid #d2d2d7;
+}
+
+.data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e5ea;
+    vertical-align: middle;
+    font-size: 14px;
+    color: #1d1d1f;
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Product/Category Thumbnails & Info */
+.product-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.product-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #e5e5ea;
+    background-color: #f5f5f7;
+}
+
+/* =========================================
+   8. ACTIONS & STATUS TOGGLES
+   ========================================= */
+.status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-text {
+    font-size: 14px;
+    color: #1d1d1f;
+    min-width: 60px;
+}
+
+/* iOS Style Toggle Switch */
+.status-toggle {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.status-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: #0071e3;
+}
+
+input:checked+.slider:before {
+    transform: translateX(16px);
+}
+
+/* Action Buttons (Edit/Delete) */
+.action-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px;
+    margin-right: 4px;
+    color: #6e6e73;
+    transition: color 0.2s;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.action-btn:hover {
+    background-color: #f5f5f7;
+}
+
+.edit-btn:hover {
+    color: #0071e3;
+}
+
+.delete-btn:hover {
+    color: #ff3b30;
+}
