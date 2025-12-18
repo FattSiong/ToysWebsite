@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Check login status
 $is_logged_in = isset($_SESSION['user_id']);
-$role = $_SESSION['role'] ?? 'guest';
+$role = $_SESSION['role'] ?? 'admin';
 
 // FETCH CATEGORIES FOR MENU
 // We need the DB connection. Check if $pdo exists, if not, require it.
@@ -61,7 +61,7 @@ try {
                 </li>
 
                 <?php if ($role === 'admin'): ?>
-                    <li><a href="/admin/product_list.php">Admin Panel</a></li>
+                    <li><a href="/admin/dashboard.php">Admin Panel</a></li>
                     <li><a href="/logout.php">Logout</a></li>
                 <?php elseif ($role === 'member'): ?>
                     <li><a href="/profile.php"><i class="fas fa-user"></i> Profile</a></li>
