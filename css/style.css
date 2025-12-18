@@ -7,8 +7,7 @@
 }
 
 body {
-    background-color: #f8f9fa; /* Very light grey */
-    color: #333333; /* Dark grey text */
+    background-color: #f4f4f4;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -16,10 +15,219 @@ body {
 
 /* 2. Navigation Bar */
 header {
+    background-color: #333;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header .logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+nav a {
+    color: #ddd;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+nav a:hover {
+    color: #fff;
+}
+
+/* 3. Main Content Container */
+main {
+    flex: 1; /* Pushes footer to bottom */
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* 4. Footer */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    margin-top: auto;
+}
+
+/* 5. Utility Classes (Like Bootstrap) */
+.btn {
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+}
+.btn-primary { background-color: #007bff; color: white; }
+.btn-danger { background-color: #dc3545; color: white; }
+.form-group { margin-bottom: 15px; }
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* --- PRODUCT GRID STYLES --- */
+
+.shop-container {
+    padding: 20px;
+}
+
+.welcome-banner {
+    background-color: #e9ecef;
+    padding: 40px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.product-grid {
+    display: grid;
+    /* This automatically arranges cards: 1 col on mobile, 4 cols on PC */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.product-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px); /* Lift up effect on hover */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.product-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover; /* Keeps image from looking squashed */
+    border-bottom: 1px solid #eee;
+}
+
+.card-body {
+    padding: 15px;
+    text-align: center;
+}
+
+.product-card h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.product-card .price {
+    font-size: 1.2rem;
+    color: #28a745; /* Green color for price */
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.card-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.card-actions .btn {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    background-color: #eee;
+    color: #333;
+    font-size: 14px;
+}
+
+.card-actions .btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+body {
+    background-color: #f8f9fa; /* Very light grey */
+    color: #333333; /* Dark grey text is easier on the eyes than pure black */
+}
+
+header {
     background-color: #ffffff; /* Pure White Header */
+    border-bottom: 1px solid #e5e5e5;
+    color: #333;
+}
+
+/* Since the header is white, links must be dark */
+header .logo {
+    color: #007bff; /* Blue Logo */
+}
+nav a {
+    color: #555;
+}
+nav a:hover {
+    color: #007bff; /* Blue on hover */
+}
+
+.welcome-banner {
+    background-color: #ffffff;
+    border: 1px solid #e5e5e5;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Soft shadow */
+}
+
+.btn-primary { 
+    background-color: #007bff; /* Standard Friendly Blue */
+    color: white;
+    border: none;
+}
+
+.product-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e5e5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03); /* Very subtle shadow */
+}
+
+.product-card h3 {
+    color: #333;
+}
+
+.product-card .price {
+    color: #0056b3; /* Darker Blue for contrast */
+}
+
+footer {
+    background-color: #ffffff; /* White footer */
+    color: #666;
+    border-top: 1px solid #e5e5e5;
+}
+
+/* --- HEADER LAYOUT --- */
+header {
+    background-color: #ffffff;
     border-bottom: 1px solid #e5e5e5;
     padding: 15px 0;
     color: #333;
+    /* Use sticky so header stays at top when scrolling */
     position: sticky; 
     top: 0;
     z-index: 1000;
@@ -45,7 +253,33 @@ header {
     gap: 10px;
 }
 
-/* Navigation Links */
+/* --- SEARCH BAR --- */
+.search-bar form {
+    display: flex;
+    background: #f1f3f5;
+    border-radius: 20px;
+    padding: 5px 15px;
+    width: 300px; /* Adjust width as needed */
+}
+
+.search-bar input {
+    border: none;
+    background: transparent;
+    outline: none;
+    flex: 1;
+    padding: 8px;
+    font-size: 14px;
+}
+
+.search-bar button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #007bff;
+    font-size: 16px;
+}
+
+/* --- NAVIGATION & DROPDOWN --- */
 .nav-links {
     display: flex;
     align-items: center;
@@ -80,7 +314,7 @@ header {
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
     border-radius: 4px;
     z-index: 1;
-    top: 100%;
+    top: 100%; /* Push it down below the link */
     padding: 10px 0;
 }
 
@@ -101,33 +335,7 @@ header {
     display: block;
 }
 
-/* Search Bar */
-.search-bar form {
-    display: flex;
-    background: #f1f3f5;
-    border-radius: 20px;
-    padding: 5px 15px;
-    width: 300px;
-}
-
-.search-bar input {
-    border: none;
-    background: transparent;
-    outline: none;
-    flex: 1;
-    padding: 8px;
-    font-size: 14px;
-}
-
-.search-bar button {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: #007bff;
-    font-size: 16px;
-}
-
-/* Cart Icon */
+/* --- CART ICON --- */
 .cart-icon {
     position: relative;
     font-size: 20px;
@@ -137,7 +345,7 @@ header {
     position: absolute;
     top: -8px;
     right: -10px;
-    background-color: #dc3545;
+    background-color: #dc3545; /* Red Badge */
     color: white;
     font-size: 10px;
     font-weight: bold;
@@ -145,123 +353,94 @@ header {
     border-radius: 50%;
 }
 
-/* 3. Main Content Container */
-main {
-    flex: 1;
-    width: 90%;
-    max-width: 1200px;
-    margin: 20px auto;
-    background: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+/* --- AUTH PAGES (Login & Register) --- */
+
+.auth-container {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center;     /* Center vertically */
+    padding: 50px 20px;
+    min-height: 60vh;        /* Ensure it takes up screen space */
 }
 
-/* 4. Footer */
-footer {
-    background-color: #ffffff;
-    color: #666;
-    text-align: center;
-    padding: 15px;
-    margin-top: auto;
-    border-top: 1px solid #e5e5e5;
-}
-
-/* 5. Utility Classes */
-.btn {
-    padding: 10px 15px;
-    border: none;
-    cursor: pointer;
-    border-radius: 4px;
-    text-decoration: none;
-    display: inline-block;
-}
-.btn-primary { 
-    background-color: #007bff; 
-    color: white; 
-}
-.btn-danger { 
-    background-color: #dc3545; 
-    color: white; 
-}
-
-/* --- PRODUCT GRID STYLES --- */
-.shop-container {
-    padding: 20px;
-}
-
-.welcome-banner {
-    background-color: #ffffff;
+.auth-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 450px;       /* Keeps the form from getting too wide */
     padding: 40px;
     border-radius: 8px;
-    margin-bottom: 30px;
-    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Nice soft shadow */
     border: 1px solid #e5e5e5;
+}
+
+.auth-card h2 {
+    text-align: center;
     color: #333;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-}
-
-.product-card {
-    background-color: #ffffff;
-    border: 1px solid #e5e5e5;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.2s;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.product-card img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-bottom: 1px solid #eee;
-}
-
-.card-body {
-    padding: 15px;
-    text-align: center;
-}
-
-.product-card h3 {
-    font-size: 18px;
     margin-bottom: 10px;
-    color: #333;
 }
 
-.product-card .price {
-    font-size: 1.2rem;
-    color: #0056b3;
-    font-weight: bold;
-    margin-bottom: 15px;
-}
-
-.card-actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.card-actions .btn {
-    flex: 1;
+.auth-card p {
     text-align: center;
-    padding: 8px;
-    background-color: #eee;
-    color: #333;
-    font-size: 14px;
+    color: #666;
+    margin-bottom: 30px;
 }
 
-.card-actions .btn-primary {
-    background-color: #007bff;
-    color: white;
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    border-color: #007bff; /* Highlight blue on click */
+    outline: none;
+}
+
+.form-group small {
+    color: #888;
+    font-size: 12px;
+}
+
+/* Alert Boxes */
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    text-align: center;
+}
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.btn-block {
+    width: 100%; /* Make button full width */
+    padding: 12px;
+    font-size: 16px;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
 }
