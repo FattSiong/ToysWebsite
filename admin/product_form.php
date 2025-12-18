@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = !empty($_POST['price']) ? $_POST['price'] : 0.00;
     $stock_quantity = !empty($_POST['stock_quantity']) ? $_POST['stock_quantity'] : 0;
     $status = isset($_POST['status']) ? 'Active' : 'Inactive';
-    
+
     // Get Selected Categories (Array)
     $selected_categories = isset($_POST['category_ids']) ? $_POST['category_ids'] : [];
 
@@ -186,6 +186,7 @@ include 'admin_header.php';
         padding: 10px;
         background: #fafafa;
     }
+
     .cat-item {
         display: block;
         margin-bottom: 5px;
@@ -193,6 +194,7 @@ include 'admin_header.php';
         font-size: 14px;
         color: #333;
     }
+
     .cat-item input {
         margin-right: 8px;
     }
@@ -225,9 +227,7 @@ include 'admin_header.php';
         </div>
 
         <div class="card">
-            <div class="card-header media-header">
-                <div class="media-title">Media</div>
-            </div>
+            <div class="card-header">Media</div>
             <div class="card-body">
                 <label class="media-upload-box" id="drop-zone" for="file-upload">
                     <div class="upload-content">
@@ -248,7 +248,7 @@ include 'admin_header.php';
                                 <button type="button" class="preview-remove-btn" onclick="markForDeletion(this, <?= $media['media_id'] ?>)">×</button>
                                 <label class="primary-select-overlay" title="Set as Main Photo">
                                     <input type="radio" name="primary_media_id" value="<?= $media['media_id'] ?>" <?= $media['is_primary'] ? 'checked' : '' ?>>
-                                    <span class="star-icon">★</span>
+                                    <span class="star-icon"><i class="icon fa-star"></i></span>
                                 </label>
 
                                 <?php
@@ -289,7 +289,7 @@ include 'admin_header.php';
         <div class="card">
             <div class="card-header">Organization</div>
             <div class="card-body">
-                
+
                 <div class="form-group">
                     <label>Categories</label>
                     <div class="category-checkbox-list">
@@ -298,10 +298,10 @@ include 'admin_header.php';
                         <?php else: ?>
                             <?php foreach ($categories as $cat): ?>
                                 <label class="cat-item">
-                                    <input type="checkbox" 
-                                           name="category_ids[]" 
-                                           value="<?= $cat['category_id'] ?>"
-                                           <?= in_array($cat['category_id'], $assigned_category_ids) ? 'checked' : '' ?>>
+                                    <input type="checkbox"
+                                        name="category_ids[]"
+                                        value="<?= $cat['category_id'] ?>"
+                                        <?= in_array($cat['category_id'], $assigned_category_ids) ? 'checked' : '' ?>>
                                     <?= htmlspecialchars($cat['name']) ?>
                                 </label>
                             <?php endforeach; ?>

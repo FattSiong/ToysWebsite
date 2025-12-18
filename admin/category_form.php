@@ -146,7 +146,7 @@ include 'admin_header.php';
                     </tr>
                 </thead>
                 <tbody id="selected-tbody">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
@@ -163,7 +163,7 @@ include 'admin_header.php';
             <h3>Select products</h3>
             <button type="button" class="btn-close-modal" id="closeModalBtn">&times;</button>
         </div>
-        
+
         <div class="modal-filters filter-bar">
             <div class="filter-group search-group">
                 <button type="button" class="search-submit-btn">
@@ -208,7 +208,7 @@ include 'admin_header.php';
                     </tr>
                 </thead>
                 <tbody id="modal-tbody">
-                    </tbody>
+                </tbody>
             </table>
         </div>
         <div class="modal-footer">

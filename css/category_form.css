@@ -4,7 +4,7 @@
 .category-form-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    margin-top: 20px;
     max-width: 800px;
 }
 
@@ -147,7 +147,8 @@
 }
 
 .modal-filters .search-input-field {
-    padding-left: 36px; /* Space for the search icon */
+    padding-left: 36px;
+    /* Space for the search icon */
     width: 100%;
 }
 

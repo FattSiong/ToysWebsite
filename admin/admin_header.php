@@ -12,6 +12,14 @@
 <body>
     <div class="admin-wrapper">
 
+        <!-- Overlay for mobile/collapsed state -->
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+        <!-- Toggle Button (Visible when sidebar is hidden) -->
+        <button id="sidebarToggle" class="sidebar-toggle-btn">
+            <i class="icon fa-bars"></i>
+        </button>
+
         <nav class="sidebar">
             <div class="sidebar-header">
                 <h2>Admin</h2>

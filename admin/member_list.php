@@ -59,17 +59,11 @@ include './admin_header.php';
     <thead>
         <tr>
             <th style="width: 40px;"><input type="checkbox"></th>
-
             <th>Name</th>
-
             <th>Email</th>
-
             <th>Phone Number</th>
-
             <th>Orders</th>
-
             <th>Total Spent</th>
-
             <th>Action</th>
         </tr>
     </thead>

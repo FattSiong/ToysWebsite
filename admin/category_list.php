@@ -41,8 +41,8 @@ include 'admin_header.php';
                 <i class="icon fa-search"></i>
             </button>
             <input type="text" name="search" class="form-input search-input-field"
-                   placeholder="Search Category"
-                   value="<?= htmlspecialchars($search_query) ?>">
+                placeholder="Search Category"
+                value="<?= htmlspecialchars($search_query) ?>">
         </div>
     </form>
 </div>

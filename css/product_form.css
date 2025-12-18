@@ -7,6 +7,7 @@
 .product-form {
     display: flex;
     flex-wrap: wrap;
+    margin-top: 20px;
     gap: 24px;
     align-items: flex-start;
 }
@@ -26,7 +27,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 0; /* Override generic card padding if needed */
+    padding-bottom: 0;
+    /* Override generic card padding if needed */
 }
 
 .media-upload-box {
@@ -144,17 +146,33 @@
 }
 
 .star-icon {
-    font-size: 18px;
+    /* CHANGED: Flexbox centering for the icon */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    /* Reduced from 26px */
+    height: 22px;
+    /* Reduced from 26px */
+
     color: white;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    transition: color 0.2s;
-    background-color: rgba(0,0,0,0.2);
+    /* This sets the background-color of the .icon child via currentColor */
+    transition: all 0.2s;
+    background-color: rgba(0, 0, 0, 0.3);
     border-radius: 50%;
-    padding: 2px;
 }
 
-.primary-select-overlay input:checked + .star-icon {
-    color: #ffc107; /* Gold */
+/* NEW: Add shadow to the icon shape itself for contrast */
+.star-icon .icon {
+    width: 12px;
+    /* Explicitly smaller than default 16px */
+    height: 12px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.primary-select-overlay input:checked+.star-icon {
+    color: #ffc107;
+    /* Gold */
     background-color: white;
     text-shadow: none;
 }
