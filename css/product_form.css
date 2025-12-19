@@ -1,0 +1,164 @@
+/* css/product_form.css */
+/* Contains styles ONLY for product_form.php specific elements.
+   Global form styles (inputs, cards, buttons) are in admin.css.
+*/
+
+/* --- PAGE LAYOUT --- */
+.product-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.form-left {
+    flex: 2;
+    min-width: 300px;
+}
+
+.form-right {
+    flex: 1;
+    min-width: 250px;
+}
+
+/* --- MEDIA UPLOADER (Specific to Product Form) --- */
+.media-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0; /* Override generic card padding if needed */
+}
+
+.media-upload-box {
+    display: block;
+    border: 1px dashed #d2d2d7;
+    border-radius: 6px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #fafafa;
+    margin-bottom: 15px;
+}
+
+.media-upload-box:hover {
+    border-color: #0071e3;
+    background-color: #f5f5f7;
+}
+
+.media-upload-box.drag-over {
+    border-color: #0071e3;
+    background-color: #e6f0ff;
+    transform: scale(1.01);
+}
+
+.upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.plus-sign {
+    font-size: 40px;
+    font-weight: 300;
+    color: #86868b;
+    margin-bottom: 8px;
+}
+
+.media-footer-text {
+    font-size: 12px;
+    color: #86868b;
+}
+
+/* --- PREVIEW GRID --- */
+.media-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e5e5ea;
+    background: #fff;
+}
+
+.preview-item img,
+.preview-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Badges & Overlays */
+.preview-type-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.preview-remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(255, 59, 48, 0.9);
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    font-size: 12px;
+    z-index: 10;
+    transition: transform 0.2s;
+}
+
+.preview-remove-btn:hover {
+    transform: scale(1.1);
+    background: #ff3b30;
+}
+
+/* Primary Selection (Star) */
+.primary-select-overlay {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 5;
+    cursor: pointer;
+}
+
+.primary-select-overlay input {
+    display: none;
+}
+
+.star-icon {
+    font-size: 18px;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    transition: color 0.2s;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.primary-select-overlay input:checked + .star-icon {
+    color: #ffc107; /* Gold */
+    background-color: white;
+    text-shadow: none;
+}
+
+.primary-select-overlay:hover .star-icon {
+    color: #ffe082;
+}
