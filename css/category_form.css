@@ -8,7 +8,7 @@
     max-width: 800px;
 }
 
-/* --- EMPTY STATE (The box with 'Choose products') --- */
+/* --- EMPTY STATE --- */
 .empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -36,8 +36,115 @@
     color: #86868b;
 }
 
-/* Note: .btn-choose logic moved to global .btn-outline in admin.css, 
-   but we can keep it here if specific override needed. 
-   Currently admin.css handles the main button style. */
+/* --- SELECTED PRODUCTS TABLE (Inside the Card) --- */
+.products-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 10px;
+}
 
-/* The '+ Add products' link in the card header was moved to .card-header-action in admin.css */
+.products-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background-color: #f5f5f7;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6e6e73;
+    border-bottom: 1px solid #d2d2d7;
+}
+
+.products-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e5ea;
+    vertical-align: middle;
+    font-size: 14px;
+    color: #1d1d1f;
+}
+
+/* Add flex display to the product name cell to align image and text */
+.products-table td:nth-child(2) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.products-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Specific resize for selected products table images */
+/* UPDATED: Matches Product List size (40px) */
+.products-table .product-thumb {
+    width: 40px !important;    /* Force width */
+    height: 40px !important;   /* Force height */
+    min-width: 40px;           /* Prevent shrinking */
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #e5e5ea;
+    background-color: #f5f5f7;
+    display: block;            /* Ensure block level for sizing */
+}
+
+/* --- BUTTON: + Add products (In Card Header) --- */
+.btn-add-products {
+    background: none;
+    border: none;
+    color: #0071e3;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.btn-add-products:hover {
+    background-color: #eef7ff;
+    text-decoration: none;
+}
+
+/* --- MODAL TABLE STYLING --- */
+.modal-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: none;
+}
+
+/* Sticky Header for Modal Table */
+.modal-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background-color: #f9f9f9; /* Slightly lighter than main table */
+    font-size: 12px;
+    font-weight: 600;
+    color: #6e6e73;
+    border-bottom: 1px solid #d2d2d7;
+    
+    /* Sticky Magic */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modal-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e5ea;
+    vertical-align: middle;
+    font-size: 14px;
+    color: #1d1d1f;
+}
+
+.modal-table tr:hover td {
+    background-color: #fafafa;
+}
+
+/* Modal Search/Filter Bar Overrides */
+.modal-filters {
+    padding: 12px 20px;
+    gap: 12px;
+    background-color: #fff;
+    border-bottom: 1px solid #e5e5ea;
+    margin-bottom: 0;
+}

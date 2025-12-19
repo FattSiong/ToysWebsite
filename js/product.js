@@ -12,10 +12,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- 2. PRODUCT LIST LOGIC (Status Toggle) ---
     const toggles = document.querySelectorAll('.toggle-status');
-    const badgeActive = document.getElementById('badge-active');
-    const badgeInactive = document.getElementById('badge-inactive');
-    const badgeAll = document.getElementById('badge-all');
-    const badgeArchived = document.getElementById('badge-archived');
     
     // Get the current tab from the table attribute we added
     const tableEl = document.querySelector('.data-table');
@@ -55,8 +51,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             statusLabel.textContent = newUiText;
                         }
 
-                        // 3. Update Badges Logic
-                        updateBadges(oldStatus, newDbStatus);
+                        // 3. Update Badges (Fetch from server)
+                        if (typeof updateBadgesLocal === 'function') {
+                            updateBadgesLocal();
+                        }
 
                         // 4. Handle Row Visibility (Move to other tab)
                         handleRowVisibility(row, currentTab, newDbStatus);
@@ -75,38 +73,22 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Helper to update badges
-    function updateBadges(oldStatus, newStatus) {
-        // Get current counts (safely)
-        let activeCount = parseInt(badgeActive ? badgeActive.textContent : 0) || 0;
-        let inactiveCount = parseInt(badgeInactive ? badgeInactive.textContent : 0) || 0;
-        let archivedCount = parseInt(badgeArchived ? badgeArchived.textContent : 0) || 0;
-        let allCount = parseInt(badgeAll ? badgeAll.textContent : 0) || 0;
+    // Helper to update badges by fetching fresh counts from the server
+    function updateBadgesLocal() {
+        if (!document.querySelector('.tabs-container')) return;
 
-        // Decrease Old Status Count
-        if (oldStatus === 'Active') activeCount--;
-        else if (oldStatus === 'Inactive') inactiveCount--;
-        else if (oldStatus === 'Archived') archivedCount--;
-
-        // Increase New Status Count
-        if (newStatus === 'Active') activeCount++;
-        else if (newStatus === 'Inactive') inactiveCount++;
-        else if (newStatus === 'Archived') archivedCount++;
-
-        // Update 'All' Count
-        // 'All' usually includes Active + Inactive, but excludes Archived.
-        // We recalculate based on if the item is moving IN or OUT of the 'All' scope.
-        const wasInAll = (oldStatus !== 'Archived');
-        const isInAll = (newStatus !== 'Archived');
-
-        if (wasInAll && !isInAll) allCount--; // Moved to Archive
-        if (!wasInAll && isInAll) allCount++; // Restored from Archive
-
-        // Apply new values
-        if (badgeActive) badgeActive.textContent = Math.max(0, activeCount);
-        if (badgeInactive) badgeInactive.textContent = Math.max(0, inactiveCount);
-        if (badgeArchived) badgeArchived.textContent = Math.max(0, archivedCount);
-        if (badgeAll) badgeAll.textContent = Math.max(0, allCount);
+        fetch('?action=get_counts')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if(document.getElementById('badge-all')) document.getElementById('badge-all').textContent = data.total;
+                if(document.getElementById('badge-active')) document.getElementById('badge-active').textContent = data.active_count;
+                if(document.getElementById('badge-inactive')) document.getElementById('badge-inactive').textContent = data.inactive_count;
+                if(document.getElementById('badge-archived')) document.getElementById('badge-archived').textContent = data.archived_count;
+            })
+            .catch(err => console.error('Error updating badges:', err));
     }
 
     // Helper to hide row if it no longer belongs in current tab
@@ -119,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (tab === 'Inactive' && newStatus !== 'Inactive') shouldRemove = true;
         if (tab === 'Archived' && newStatus !== 'Archived') shouldRemove = true;
         
-        // If tab is 'All', generally we keep it unless it became Archived (which usually hides it from All)
+        // If tab is 'All', generally we keep it unless it became Archived
         if (tab === 'All' && newStatus === 'Archived') shouldRemove = true;
 
         if (shouldRemove) {
@@ -133,12 +115,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Helper to check if table is empty and show "No products found"
+    // Also handles pagination redirection if page becomes empty
     function checkEmptyTable() {
         const tbody = document.querySelector('.data-table tbody');
         if (tbody && tbody.children.length === 0) {
-            const noDataRow = document.createElement('tr');
-            noDataRow.innerHTML = '<td colspan="6" style="text-align:center; padding: 30px; color: #888;">No products found.</td>';
-            tbody.appendChild(noDataRow);
+            // Check if we are on a page > 1 using URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentPage = parseInt(urlParams.get('page')) || 1;
+
+            if (currentPage > 1) {
+                // Determine previous page
+                const prevPage = currentPage - 1;
+                urlParams.set('page', prevPage);
+                // Reload page to the previous page
+                window.location.search = urlParams.toString();
+            } else {
+                // If we are on page 1, show the "No products found" message
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = '<td colspan="6" style="text-align:center; padding: 30px; color: #888;">No products found.</td>';
+                tbody.appendChild(noDataRow);
+            }
         }
     }
 
@@ -148,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function () {
     deleteBtns.forEach(btn => {
         btn.addEventListener('click', function () {
             const productId = this.getAttribute('data-id');
-            const currentStatus = this.getAttribute('data-status');
             const row = document.getElementById('row-' + productId);
             const tableEl = document.querySelector('.data-table');
             const currentTab = tableEl ? tableEl.getAttribute('data-current-tab') : 'All';
@@ -165,12 +160,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     .then(data => {
                         if (data.success) {
                             // Update Badges
-                            updateBadges(currentStatus, 'Archived');
+                            updateBadgesLocal();
                             
                             // Handle Row Visibility
-                            // If we archive, we generally remove it from Active/Inactive/All views
-                            // If we are ALREADY in Archived view, we technically shouldn't see the delete button, 
-                            // but if we did, we wouldn't remove it.
                             handleRowVisibility(row, currentTab, 'Archived');
 
                         } else {
@@ -194,22 +186,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('filterForm');
 
     if (priceBtn) {
-        // Show inputs when button clicked
         priceBtn.addEventListener('click', function() {
             priceBtn.style.display = 'none';
             priceInputs.style.display = 'flex';
             minInput.focus();
         });
 
-        // Close inputs (and clear filter if it was active)
         closePriceBtn.addEventListener('click', function() {
             minInput.value = '';
             maxInput.value = '';
-            // Check if PHP passed a value indicating filter was active (needs reload)
-            // We can check URL params or a data attribute, or just check input values
-            // Since inputs are cleared now, we might need to submit if there WAS a value.
-            // Simple way: just hide. If user wants to reset, they cleared inputs.
-            // If the URL has params, we should submit.
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('min_price') || urlParams.has('max_price')) {
                 form.submit();
@@ -222,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /**
- * Handles the "Remove" button click for EXISTING media items (loaded from DB).
+ * Handles the "Remove" button click for EXISTING media items.
  */
 function markForDeletion(element, mediaId) {
     if (confirm('Are you sure you want to delete this media? It will be removed when you click "Save Product".')) {

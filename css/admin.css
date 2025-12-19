@@ -677,7 +677,82 @@ label {
 }
 
 /* =========================================
-   11. TOGGLE SWITCHES
+   11. BULK ACTIONS HEADER
+   ========================================= */
+/* Hidden by default */
+.bulk-header {
+    background-color: #e3f1ff !important;
+    display: none;
+}
+
+.bulk-header th {
+    background-color: #e3f1ff !important;
+    padding: 8px 16px;
+    border-bottom: 1px solid #0071e3;
+}
+
+.bulk-actions-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.bulk-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.selected-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0071e3;
+}
+
+.bulk-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-bulk {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.1);
+    background-color: white;
+    color: #333;
+    transition: background 0.2s;
+}
+
+.btn-bulk:hover {
+    background-color: #f0f0f0;
+}
+
+.btn-bulk-delete {
+    background-color: #fff2f2;
+    color: #d60000;
+    border-color: #ffcfcf;
+}
+
+.btn-bulk-delete:hover {
+    background-color: #ffe6e6;
+}
+
+/* Classes to toggle visibility */
+.header-hidden {
+    display: none !important;
+}
+
+.header-visible {
+    display: table-row !important;
+}
+
+
+/* =========================================
+   12. TOGGLE SWITCHES
    ========================================= */
 .status-wrapper {
     display: flex;
@@ -738,7 +813,7 @@ input:checked+.slider:before {
 }
 
 /* =========================================
-   12. GLOBAL MODALS
+   13. GLOBAL MODALS
    ========================================= */
 .modal-overlay {
     display: none;
@@ -760,7 +835,7 @@ input:checked+.slider:before {
 
 .modal-box {
     background: white;
-    width: 900px;
+    width: 1000px;
     max-width: 95%;
     max-height: 85%;
     border-radius: 12px;
@@ -813,7 +888,7 @@ input:checked+.slider:before {
 }
 
 /* =========================================
-   13. SIDEBAR TOGGLE & OVERLAY
+   14. SIDEBAR TOGGLE & OVERLAY
    ========================================= */
 .sidebar-overlay {
     position: fixed;
@@ -864,7 +939,7 @@ body.sidebar-open .sidebar-toggle-btn {
 }
 
 /* =========================================
-   14. PAGINATION STYLES
+   15. PAGINATION STYLES
    ========================================= */
 .pagination-container {
     display: flex;
