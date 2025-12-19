@@ -28,6 +28,29 @@ $orders = [
 // Handle Search Logic (Placeholder)
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
 
+$sort_option = $_GET['sort'] ?? '';
+
+$sql = "";
+
+// 1. SORT LOGIC
+switch ($sort_option) {
+    case 'id_asc':
+        $sql .= " ORDER BY o.order_id ASC";
+        break;
+    case 'id_desc':
+        $sql .= " ORDER BY o.order_id DESC";
+        break;
+    case 'date_asc':
+        $sql .= " ORDER BY o.order_date ASC";
+        break;
+    case 'date_desc':
+        $sql .= " ORDER BY o.order_date DESC";
+        break;
+    default:
+        $sql .= " ORDER BY o.order_id DESC";
+        break;
+}
+
 // 1. Include the Admin Header
 include './admin_header.php';
 ?>
@@ -45,6 +68,16 @@ include './admin_header.php';
             <input type="text" name="search" class="form-input search-input-field"
                 placeholder="Search Order"
                 value="<?= htmlspecialchars($search_query) ?>">
+        </div>
+
+        <div class="filter-group sort-group">
+            <select name="sort" class="form-select" onchange="this.form.submit()">
+                <option value="" <?= empty($sort_option) ? 'selected' : '' ?> hidden>Sort</option>
+                <option value="id_asc" <?= $sort_option == 'id_asc' ? 'selected' : '' ?>>ID (Oldest - Newest)</option>
+                <option value="id_desc" <?= $sort_option == 'id_desc' ? 'selected' : '' ?>>ID (Newest - Oldest)</option>
+                <option value="date_asc" <?= $sort_option == 'date_asc' ? 'selected' : '' ?>>Date (Oldest - Newest)</option>
+                <option value="date_desc" <?= $sort_option == 'date_desc' ? 'selected' : '' ?>>Date (Newest - Oldest)</option>
+            </select>
         </div>
     </form>
 </div>

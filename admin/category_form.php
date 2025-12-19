@@ -132,7 +132,7 @@ include 'admin_header.php';
             <div id="empty-state" class="empty-state">
                 <h4>Add products to the category</h4>
                 <p>Products added will be displayed here.</p>
-                <button type="button" class="btn-choose" id="emptyAddBtn">Choose products</button>
+                <button type="button" class="btn-outline" id="emptyAddBtn">Choose products</button>
             </div>
 
             <table class="products-table" id="selected-table" style="display: none;">

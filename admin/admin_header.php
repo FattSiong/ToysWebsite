@@ -16,9 +16,11 @@
         <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
         <!-- Toggle Button (Visible when sidebar is hidden) -->
-        <button id="sidebarToggle" class="sidebar-toggle-btn">
-            <i class="icon fa-bars"></i>
-        </button>
+        <div class="top-header-bar">
+            <button id="sidebarToggle" class="sidebar-toggle-btn">
+                <i class="icon fa-bars"></i>
+            </button>
+        </div>
 
         <nav class="sidebar">
             <div class="sidebar-header">

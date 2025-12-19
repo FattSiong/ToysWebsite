@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
-require_once 'media_helper.php';
+require_once 'uploadMedia.php';
 
 // Initialize variables
 $product_id = null;
@@ -246,10 +246,18 @@ include 'admin_header.php';
                         <?php foreach ($media_files as $media): ?>
                             <div class="preview-item">
                                 <button type="button" class="preview-remove-btn" onclick="markForDeletion(this, <?= $media['media_id'] ?>)">×</button>
-                                <label class="primary-select-overlay" title="Set as Main Photo">
-                                    <input type="radio" name="primary_media_id" value="<?= $media['media_id'] ?>" <?= $media['is_primary'] ? 'checked' : '' ?>>
-                                    <span class="star-icon"><i class="icon fa-star"></i></span>
-                                </label>
+                                <?php
+                                // --- CHANGE STARTS HERE --- 
+                                // Only show the "Primary" star selection if it is an IMAGE
+                                if ($media['media_type'] === 'image'):
+                                ?>
+                                    <label class="primary-select-overlay" title="Set as Main Photo">
+                                        <input type="radio" name="primary_media_id" value="<?= $media['media_id'] ?>" <?= $media['is_primary'] ? 'checked' : '' ?>>
+                                        <span class="star-icon"><i class="icon fa-star"></i></span>
+                                    </label>
+                                <?php endif;
+                                // --- CHANGE ENDS HERE --- 
+                                ?>
 
                                 <?php
                                 $path_from_db = $media['file_path'];
@@ -336,7 +344,7 @@ include 'admin_header.php';
 </form>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="../js/media.js"></script>
+<script src="../js/uploadMedia.js"></script>
 <script src="../js/product.js"></script>
 
 <?php include 'admin_footer.php'; ?>

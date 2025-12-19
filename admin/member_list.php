@@ -34,6 +34,47 @@ $members = [
 // Handle Search Logic (Placeholder)
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
 
+$sort_option = $_GET['sort'] ?? '';
+
+$sql = "";
+
+// 1. SORT LOGIC
+switch ($sort_option) {
+    case 'name_asc':
+        $sql .= " ORDER BY u.full_name ASC";
+        break;
+    case 'name_desc':
+        $sql .= " ORDER BY u.full_name DESC";
+        break;
+    case 'email_asc':
+        $sql .= " ORDER BY u.email ASC";
+        break;
+    case 'email_desc':
+        $sql .= " ORDER BY u.email DESC";
+        break;
+    case 'phone_asc':
+        $sql .= " ORDER BY u.phone_number ASC";
+        break;
+    case 'phone_desc':
+        $sql .= " ORDER BY u.phone_number DESC";
+        break;
+    case 'order_asc':
+        $sql .= " ORDER BY u.order ASC";
+        break;
+    case 'order_desc':
+        $sql .= " ORDER BY u.order DESC";
+        break;
+    case 'spent_asc':
+        $sql .= " ORDER BY u.spent ASC";
+        break;
+    case 'spent_desc':
+        $sql .= " ORDER BY u.spent DESC";
+        break;
+    default:
+        $sql .= " ORDER BY o.user_id DESC";
+        break;
+}
+
 // 1. Include the Admin Header
 include './admin_header.php';
 ?>
@@ -51,6 +92,22 @@ include './admin_header.php';
             <input type="text" name="search" class="form-input search-input-field"
                 placeholder="Search Member"
                 value="<?= htmlspecialchars($search_query) ?>">
+        </div>
+
+        <div class="filter-group sort-group">
+            <select name="sort" class="form-select" onchange="this.form.submit()">
+                <option value="" <?= empty($sort_option) ? 'selected' : '' ?> hidden>Sort</option>
+                <option value="name_asc" <?= $sort_option == 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
+                <option value="name_desc" <?= $sort_option == 'name_desc' ? 'selected' : '' ?>>Name (Z-A)</option>
+                <option value="email_asc" <?= $sort_option == 'email_asc' ? 'selected' : '' ?>>Email (A-Z)</option>
+                <option value="email_desc" <?= $sort_option == 'email_desc' ? 'selected' : '' ?>>Email (Z-A)</option>
+                <option value="phone_asc" <?= $sort_option == 'phone_asc' ? 'selected' : '' ?>>Phone (Low-High)</option>
+                <option value="phone_desc" <?= $sort_option == 'phone_desc' ? 'selected' : '' ?>>Phone (High-Low)</option>
+                <option value="order_asc" <?= $sort_option == 'order_asc' ? 'selected' : '' ?>>Order (Low-High)</option>
+                <option value="order_desc" <?= $sort_option == 'order_desc' ? 'selected' : '' ?>>Order (High-Low)</option>
+                <option value="spent_asc" <?= $sort_option == 'spent_asc' ? 'selected' : '' ?>>Spent (Low-High)</option>
+                <option value="spent_desc" <?= $sort_option == 'spent_desc' ? 'selected' : '' ?>>Spent (High-Low)</option>
+            </select>
         </div>
     </form>
 </div>

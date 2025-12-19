@@ -13,7 +13,6 @@ body {
     color: #1d1d1f;
     height: 100vh;
     overflow: hidden;
-    /* Prevent body scroll, let main-content scroll */
 }
 
 a {
@@ -29,7 +28,6 @@ a {
     height: 100vh;
     width: 100%;
     position: relative;
-    /* Context for absolute positioning */
 }
 
 /* =========================================
@@ -43,19 +41,30 @@ a {
     flex-direction: column;
     padding: 20px 10px;
     flex-shrink: 0;
-
-    /* NEW: Sidebar Toggle Logic */
     position: fixed;
-    /* Fixed to float over content or sit on side */
     left: -260px;
-    /* Hidden by default */
     top: 0;
     bottom: 0;
     z-index: 1000;
     transition: left 0.3s ease;
 }
 
-/* When body has class 'sidebar-open', show sidebar */
+.top-header-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: rgba(245, 245, 247, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 800;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
 body.sidebar-open .sidebar {
     left: 0;
 }
@@ -105,21 +114,17 @@ body.sidebar-open .sidebar {
 
 .sidebar-menu a.active {
     background-color: #0071e3;
-    /* Apple Blue */
     color: #ffffff;
 }
 
 .sidebar-menu a.active .icon {
     color: #ffffff;
     background-color: white;
-    /* For mask icons to show white */
 }
 
-/* LOGOUT STYLE */
 .logout-link {
     margin-top: 20px;
     color: #ff3b30 !important;
-    /* Apple Red */
 }
 
 .logout-link .icon {
@@ -136,24 +141,13 @@ body.sidebar-open .sidebar {
 .main-content {
     flex-grow: 1;
     padding: 40px;
-    /* ADDED: Extra top/left padding to prevent button overlap when sidebar is closed */
     padding-top: 70px;
     overflow-y: auto;
     position: relative;
     margin-left: 0;
-    /* No margin when sidebar hidden */
     transition: margin-left 0.3s ease;
     width: 100%;
 }
-
-/* Optional: If you want content to push when sidebar opens (Desktop style) 
-   Uncomment below if you prefer pushing over overlaying
-*/
-/*
-body.sidebar-open .main-content {
-    margin-left: 260px;
-}
-*/
 
 /* =========================================
    5. PAGE HEADERS & GLOBAL LINKS
@@ -245,6 +239,23 @@ body.sidebar-open .main-content {
     text-decoration: underline;
 }
 
+/* Used for secondary actions (e.g. Choose products) */
+.btn-outline {
+    background-color: white;
+    color: #0071e3;
+    border: 1px solid #0071e3;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-outline:hover {
+    background-color: #eef7ff;
+}
+
 /* =========================================
    7. GLOBAL CARDS
    ========================================= */
@@ -267,6 +278,28 @@ body.sidebar-open .main-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/* Header variant for media or flex layouts */
+.card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Action button inside card header (e.g., "+ Add Products") */
+.card-header-action {
+    background: none;
+    border: none;
+    color: #0071e3;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+}
+
+.card-header-action:hover {
+    text-decoration: underline;
 }
 
 .card-body {
@@ -306,13 +339,11 @@ label {
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* Hides the default dropdown arrow so we can use custom icons */
 .form-select {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
     padding-right: 32px;
-    /* Space for the icon */
     cursor: pointer;
 }
 
@@ -335,7 +366,6 @@ label {
     display: block;
 }
 
-/* Error/Success Boxes */
 .error-box {
     background-color: #fff2f2;
     border: 1px solid #ffcfcf;
@@ -346,7 +376,6 @@ label {
     font-size: 14px;
 }
 
-/* Form Actions Container (Bottom Buttons) */
 .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -357,7 +386,7 @@ label {
 }
 
 /* =========================================
-   9. TABS & FILTERS (List Pages)
+   9. TABS & FILTERS
    ========================================= */
 .tabs-container {
     border-bottom: 1px solid #d2d2d7;
@@ -404,11 +433,18 @@ label {
     font-size: 11px;
 }
 
-/* Filter Bar */
 .filter-bar {
     margin-bottom: 20px;
     display: flex;
     align-items: center;
+}
+
+/* Variant for inside modals */
+.modal-filter-bar {
+    padding: 12px 20px;
+    border-bottom: 1px solid #e5e5ea;
+    background: #fbfbfd;
+    margin-bottom: 0;
 }
 
 .filter-form {
@@ -423,7 +459,6 @@ label {
     min-width: 180px;
 }
 
-/* Custom Icon Positioning for Dropdowns */
 .icon-right {
     position: absolute;
     right: 12px;
@@ -431,11 +466,9 @@ label {
     transform: translateY(-50%);
     color: #86868b;
     pointer-events: none;
-    /* Clicks pass through to select */
     z-index: 2;
 }
 
-/* Hover effect for the icon when hovering the group */
 .filter-group:hover .icon-right {
     color: #1d1d1f;
 }
@@ -444,7 +477,6 @@ label {
     min-width: 250px;
 }
 
-/* Search specific overrides */
 .search-submit-btn {
     position: absolute;
     left: 4px;
@@ -455,6 +487,7 @@ label {
     cursor: pointer;
     color: #86868b;
     padding: 4px;
+    z-index: 5;
 }
 
 .search-submit-btn:hover {
@@ -463,7 +496,6 @@ label {
 
 .search-input-field {
     padding-left: 36px;
-    /* Space for icon */
 }
 
 /* Price Filters */
@@ -474,7 +506,6 @@ label {
 .price-trigger-btn {
     width: 100%;
     height: 40px;
-    /* Match input height */
     background: white;
     border: 1px solid #d2d2d7;
     border-radius: 6px;
@@ -519,6 +550,10 @@ label {
     padding: 0 5px;
 }
 
+.sort-group {
+    margin-left: auto;
+}
+
 /* =========================================
    10. DATA TABLES
    ========================================= */
@@ -559,7 +594,21 @@ label {
     background-color: #fafafa;
 }
 
-/* Table Image Cells */
+/* Sticky Header Variant (for Modals) */
+.data-table-sticky {
+    border: none;
+    border-radius: 0;
+    margin-bottom: 0;
+}
+
+.data-table-sticky th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f9f9f9;
+}
+
+/* Product Cell & Thumbnails */
 .product-cell {
     display: flex;
     align-items: center;
@@ -575,7 +624,7 @@ label {
     background-color: #f5f5f7;
 }
 
-/* Action Buttons in Table */
+/* Action Buttons */
 .action-btn {
     border: none;
     background: none;
@@ -600,6 +649,31 @@ label {
 
 .delete-btn:hover {
     color: #ff3b30;
+}
+
+/* Sortable Links */
+.sortable-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.sortable-link:hover {
+    color: #0071e3;
+}
+
+.sortable-link .icon {
+    width: 11px;
+    height: 11px;
+    color: #86868b;
+}
+
+.sortable-link.active .icon {
+    color: #0071e3;
 }
 
 /* =========================================
@@ -761,7 +835,6 @@ body.sidebar-open .sidebar-overlay {
 
 .sidebar-toggle-btn {
     position: fixed;
-    top: 15px;
     left: 15px;
     z-index: 999;
     background: transparent;
@@ -773,7 +846,6 @@ body.sidebar-open .sidebar-overlay {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    /* Circle shape on hover */
     transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 
@@ -786,8 +858,70 @@ body.sidebar-open .sidebar-overlay {
     color: #1d1d1f;
 }
 
-/* Hide toggle button when sidebar is OPEN */
 body.sidebar-open .sidebar-toggle-btn {
     opacity: 0;
     pointer-events: none;
+}
+
+/* =========================================
+   14. PAGINATION STYLES
+   ========================================= */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    margin-top: 10px;
+    border-top: 1px solid #e5e5ea;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: #6e6e73;
+}
+
+.pagination-links {
+    display: flex;
+    gap: 5px;
+}
+
+.page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 14px;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    background-color: white;
+    color: #1d1d1f;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.page-link:hover:not(.disabled):not(.active) {
+    background-color: #f5f5f7;
+    border-color: #0071e3;
+    color: #0071e3;
+}
+
+.page-link.active {
+    background-color: #0071e3;
+    border-color: #0071e3;
+    color: white;
+    font-weight: 500;
+}
+
+.page-link.disabled {
+    color: #aeaeae;
+    background-color: #f5f5f7;
+    cursor: not-allowed;
+    border-color: #e5e5ea;
+}
+
+.page-link .icon {
+    width: 10px;
+    height: 10px;
 }
