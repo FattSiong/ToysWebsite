@@ -1,86 +1,143 @@
 <?php
 // login.php
-
-require 'includes/db.php';
+require 'base.php';
 include 'includes/header.php';
 
-$error = '';
+// --- Process Login Submission ---
+if (is_post()) {
+    // 1. Inputs
+    $login_id = req('login_id'); // Can be email OR username
+    $password = req('password');
+    $remember = req('remember'); // Checkbox value (1 or null)
 
-// Handle Login Submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email    = trim($_POST['email']);
-    $password = $_POST['password'];
+    // 2. Validation
+    if ($login_id == '') {
+        $_err['login_id'] = 'Email or Username is required';
+    }
 
-    if (empty($email) || empty($password)) {
-        $error = "Please enter both email and password.";
-    } else {
-        // 1. Check Database for the Email
-        $stmt = $pdo->prepare("SELECT user_id, username, password_hash, role, is_verified FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+    if ($password == '') {
+        $_err['password'] = 'Password is required';
+    }
 
-        // 2. Verify Password
-        if ($user && password_verify($password, $user['password_hash'])) {
-            
-            // 3. Check if Email is Verified
-            if ($user['is_verified'] == 1) {
-                // SUCCESS: Log them in
+    // 3. Authentication Logic
+    if (!$_err) {
+        global $_db;
+        
+        // Fetch user by email OR username
+        $stmt = $_db->prepare("SELECT * FROM users WHERE email = ? OR username = ?");
+        $stmt->execute([$login_id, $login_id]);
+        $user = $stmt->fetch(); // Returns object because of base.php settings
+
+        if ($user) {
+            // Verify Password
+            if (password_verify($password, $user->password_hash)) {
+                // --- SUCCESS ---
                 
-                // Prevent session fixation attacks
                 session_regenerate_id(true);
 
-                // Store user info in Session
-                $_SESSION['user_id']  = $user['user_id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['role']     = $user['role'];
+                // Store User Data in Session
+                $_SESSION['user'] = $user; 
+                $_SESSION['user_id'] = $user->user_id;
+                $_SESSION['role']    = $user->role;
+                $_SESSION['username'] = $user->username;
+
+                // --- REMEMBER ME LOGIC ---
+                if ($remember) {
+                    // USER WANTS TO BE REMEMBERED
+                    
+                    // 1. Generate a random token
+                    $token = bin2hex(random_bytes(32)); // 64 chars
+                    
+                    // 2. Hash it for the database (security best practice)
+                    $token_hash = hash('sha256', $token);
+                    
+                    // 3. Store hash in DB
+                    $update = $_db->prepare("UPDATE users SET remember_token = ? WHERE user_id = ?");
+                    $update->execute([$token_hash, $user->user_id]);
+                    
+                    // 4. Set Cookie (lasts 30 days)
+                    // Format: user_id:token (so we know who to look up)
+                    $cookie_value = $user->user_id . ':' . $token;
+                    setcookie('remember_me', $cookie_value, time() + (86400 * 30), "/", "", false, true); 
+                    
+                    // Ensure the Session Cookie also lasts longer to match (optional but good UX)
+                    // Note: You can't easily change an active session's cookie lifetime on the fly without
+                    // destroying/restarting, but the remember_me cookie handles the re-login anyway.
+
+                } else {
+                    // USER DOES NOT WANT TO BE REMEMBERED
+                    
+                    // Explicitly clear any existing cookie to prevent auto-login next time
+                    if (isset($_COOKIE['remember_me'])) {
+                        // Must match the setcookie parameters exactly (path /)
+                        setcookie('remember_me', '', time() - 3600, "/");
+                        unset($_COOKIE['remember_me']);
+                    }
+                    
+                    // Clear the token in the database for extra security
+                    $update = $_db->prepare("UPDATE users SET remember_token = NULL WHERE user_id = ?");
+                    $update->execute([$user->user_id]);
+                    
+                    // FORCE Session Cookie to be strictly temporary (Session-only)
+                    // This tells the browser "Delete this cookie when you close"
+                    if (isset($_COOKIE[session_name()])) {
+                        setcookie(session_name(), $_COOKIE[session_name()], 0, "/");
+                    }
+                }
 
                 // Redirect based on Role
-                if ($user['role'] === 'admin') {
-                    header("Location: admin/product_list.php");
+                if ($user->role === 'admin') {
+                    redirect('admin/product_list.php'); 
                 } else {
-                    header("Location: index.php");
+                    redirect('index.php');
                 }
-                exit;
-
             } else {
-                // FAILURE: Not verified
-                $error = "Your email is not verified. Please check your inbox.";
+                $_err['general'] = 'Invalid username/email or password.';
             }
-
         } else {
-            // FAILURE: Wrong email OR password
-            $error = "Invalid email or password.";
+            $_err['general'] = 'Invalid username/email or password.';
         }
     }
 }
 ?>
 
-<!-- HTML Login Form -->
+<!-- Link to Auth CSS -->
+<link rel="stylesheet" href="css/auth.css">
+
 <div class="auth-container">
     <div class="auth-card">
-        <h2>Welcome Back</h2>
-        <p>Login to continue shopping</p>
-    
-        <?php if ($error): ?>
+        <h2 style="text-align:center; margin-bottom: 1.5rem; color: #333;">Welcome Back</h2>
+        
+        <!-- General Login Error -->
+        <?php if (isset($_err['general'])): ?>
             <div class="alert alert-danger">
-                <?php echo $error; ?>
+                <?= encode($_err['general']) ?>
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="login.php">
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" name="email" required placeholder="name@example.com" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
-            </div>
+        <form method="post">
             
             <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" required>
+                <label for="login_id">Email or Username <span>*</span></label>
+                <?php html_text('login_id'); ?>
+                <?php err('login_id'); ?>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password <span>*</span></label>
+                <?php html_password('password'); ?>
+                <?php err('password'); ?>
+            </div>
+
+            <!-- Remember Me Checkbox -->
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" name="remember" id="remember" value="1" style="width: auto;">
+                <label for="remember" style="margin: 0; font-weight: normal; cursor: pointer;">Remember Me</label>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">Login</button>
         </form>
-        
+
         <div class="auth-footer">
             Don't have an account? <a href="register.php">Register here</a>
         </div>
