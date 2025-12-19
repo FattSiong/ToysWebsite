@@ -31,7 +31,13 @@ if (is_post()) {
             // Verify Password
             if (password_verify($password, $user->password_hash)) {
                 // --- SUCCESS ---
-                
+                if ($user->role === 'member' && empty($user->phone_number)) {
+                    // DO NOT LOGIN YET. Set temporary partial ID.
+                    $_SESSION['partial_login_id'] = $user->user_id;
+                    $_SESSION['remember_choice'] = $remember; // Carry over remember choice
+                    redirect('verify_phone.php');
+                }
+
                 session_regenerate_id(true);
 
                 // Store User Data in Session
