@@ -15,6 +15,15 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 // 2. Identify Page Type
 $is_admin_page = ($role === 'admin' && strpos($_SERVER['PHP_SELF'], '/admin/') !== false);
+
+// Default to placeholder
+$profile_pic = $base_path . 'images/no-image.jpg'; 
+
+// If logged in and has photo, use it
+if ($is_logged_in && !empty($_SESSION['user']['profile_photo'])) {
+    $profile_pic = $base_path . 'images/profiles/' . $_SESSION['user']['profile_photo'];
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">

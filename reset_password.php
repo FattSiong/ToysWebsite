@@ -12,21 +12,24 @@ if (is_post()) {
     if ($pass == '' || $pass !== $confirm) {
         $_err['password'] = "Passwords do not match or empty.";
     } else {
-        // Find user by token
-        $stm = $_db->prepare("SELECT * FROM users WHERE reset_token = ?");
+        // 1. Find user by token AND check expiry
+        $stm = $_db->prepare("SELECT * FROM users WHERE reset_token = ? AND reset_expires_at > NOW()");
         $stm->execute([$token]);
         $user = $stm->fetch();
 
         if ($user) {
+            // 2. Hash new password
             $hash = password_hash($pass, PASSWORD_DEFAULT);
-            // Update password AND clear token
-            $stm = $_db->prepare("UPDATE users SET password_hash = ?, reset_token = NULL WHERE user_id = ?");
-            $stm->execute([$hash, $user->user_id]);
             
-            temp('info', 'Password reset! You can now login.');
+            // 3. Update password AND clear token/expiry
+            // (Fixed: used array syntax $user['user_id'])
+            $stm = $_db->prepare("UPDATE users SET password_hash = ?, reset_token = NULL, reset_expires_at = NULL WHERE user_id = ?");
+            $stm->execute([$hash, $user['user_id']]);
+            
+            temp('info', 'Password reset successful! You can now login.');
             redirect('login.php');
         } else {
-            $_err['general'] = "Invalid or expired token.";
+            $_err['general'] = "Invalid or expired token. Please request a new one.";
         }
     }
 }
@@ -43,6 +46,7 @@ if (is_post()) {
             <div class="form-group">
                 <label>New Password</label>
                 <?php html_password('password'); ?>
+                <?php err('password'); ?>
             </div>
             <div class="form-group">
                 <label>Confirm Password</label>
