@@ -12,7 +12,7 @@ body {
     background-color: #f5f5f7;
     color: #1d1d1f;
     height: 100vh;
-    overflow: hidden; /* Prevent body scroll, let main-content scroll */
+    overflow: hidden;
 }
 
 a {
@@ -27,6 +27,7 @@ a {
     display: flex;
     height: 100vh;
     width: 100%;
+    position: relative;
 }
 
 /* =========================================
@@ -40,6 +41,32 @@ a {
     flex-direction: column;
     padding: 20px 10px;
     flex-shrink: 0;
+    position: fixed;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    transition: left 0.3s ease;
+}
+
+.top-header-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: rgba(245, 245, 247, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 800;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.sidebar-open .sidebar {
+    left: 0;
 }
 
 .sidebar-header h2 {
@@ -86,23 +113,24 @@ a {
 }
 
 .sidebar-menu a.active {
-    background-color: #0071e3; /* Apple Blue */
+    background-color: #0071e3;
     color: #ffffff;
 }
 
 .sidebar-menu a.active .icon {
     color: #ffffff;
-    background-color: white; /* For mask icons to show white */
+    background-color: white;
 }
 
-/* LOGOUT STYLE */
 .logout-link {
     margin-top: 20px;
-    color: #ff3b30 !important; /* Apple Red */
+    color: #ff3b30 !important;
 }
+
 .logout-link .icon {
     background-color: #ff3b30 !important;
 }
+
 .logout-link:hover {
     background-color: #fff2f1 !important;
 }
@@ -113,8 +141,12 @@ a {
 .main-content {
     flex-grow: 1;
     padding: 40px;
+    padding-top: 70px;
     overflow-y: auto;
     position: relative;
+    margin-left: 0;
+    transition: margin-left 0.3s ease;
+    width: 100%;
 }
 
 /* =========================================
@@ -176,7 +208,8 @@ a {
     background-color: #005bb5;
 }
 
-.btn-cancel, .btn-secondary {
+.btn-cancel,
+.btn-secondary {
     background-color: white;
     color: #1d1d1f;
     padding: 8px 16px;
@@ -188,7 +221,8 @@ a {
     transition: background-color 0.2s;
 }
 
-.btn-cancel:hover, .btn-secondary:hover {
+.btn-cancel:hover,
+.btn-secondary:hover {
     background-color: #f5f5f7;
     text-decoration: none;
 }
@@ -203,6 +237,23 @@ a {
 
 .btn-danger:hover {
     text-decoration: underline;
+}
+
+/* Used for secondary actions (e.g. Choose products) */
+.btn-outline {
+    background-color: white;
+    color: #0071e3;
+    border: 1px solid #0071e3;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-outline:hover {
+    background-color: #eef7ff;
 }
 
 /* =========================================
@@ -227,6 +278,28 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/* Header variant for media or flex layouts */
+.card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Action button inside card header (e.g., "+ Add Products") */
+.card-header-action {
+    background: none;
+    border: none;
+    color: #0071e3;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+}
+
+.card-header-action:hover {
+    text-decoration: underline;
 }
 
 .card-body {
@@ -266,12 +339,11 @@ label {
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* Hides the default dropdown arrow so we can use custom icons */
 .form-select {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    padding-right: 32px; /* Space for the icon */
+    padding-right: 32px;
     cursor: pointer;
 }
 
@@ -294,7 +366,6 @@ label {
     display: block;
 }
 
-/* Error/Success Boxes */
 .error-box {
     background-color: #fff2f2;
     border: 1px solid #ffcfcf;
@@ -305,7 +376,6 @@ label {
     font-size: 14px;
 }
 
-/* Form Actions Container (Bottom Buttons) */
 .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -316,7 +386,7 @@ label {
 }
 
 /* =========================================
-   9. TABS & FILTERS (List Pages)
+   9. TABS & FILTERS
    ========================================= */
 .tabs-container {
     border-bottom: 1px solid #d2d2d7;
@@ -363,11 +433,18 @@ label {
     font-size: 11px;
 }
 
-/* Filter Bar */
 .filter-bar {
     margin-bottom: 20px;
     display: flex;
     align-items: center;
+}
+
+/* Variant for inside modals */
+.modal-filter-bar {
+    padding: 12px 20px;
+    border-bottom: 1px solid #e5e5ea;
+    background: #fbfbfd;
+    margin-bottom: 0;
 }
 
 .filter-form {
@@ -382,18 +459,16 @@ label {
     min-width: 180px;
 }
 
-/* Custom Icon Positioning for Dropdowns */
 .icon-right {
     position: absolute;
     right: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: #86868b;
-    pointer-events: none; /* Clicks pass through to select */
+    pointer-events: none;
     z-index: 2;
 }
 
-/* Hover effect for the icon when hovering the group */
 .filter-group:hover .icon-right {
     color: #1d1d1f;
 }
@@ -402,7 +477,6 @@ label {
     min-width: 250px;
 }
 
-/* Search specific overrides */
 .search-submit-btn {
     position: absolute;
     left: 4px;
@@ -413,6 +487,7 @@ label {
     cursor: pointer;
     color: #86868b;
     padding: 4px;
+    z-index: 5;
 }
 
 .search-submit-btn:hover {
@@ -420,15 +495,17 @@ label {
 }
 
 .search-input-field {
-    padding-left: 36px; /* Space for icon */
+    padding-left: 36px;
 }
 
 /* Price Filters */
-.price-toggle-group { min-width: 200px; }
+.price-toggle-group {
+    min-width: 200px;
+}
 
 .price-trigger-btn {
     width: 100%;
-    height: 40px; /* Match input height */
+    height: 40px;
     background: white;
     border: 1px solid #d2d2d7;
     border-radius: 6px;
@@ -473,6 +550,10 @@ label {
     padding: 0 5px;
 }
 
+.sort-group {
+    margin-left: auto;
+}
+
 /* =========================================
    10. DATA TABLES
    ========================================= */
@@ -513,7 +594,21 @@ label {
     background-color: #fafafa;
 }
 
-/* Table Image Cells */
+/* Sticky Header Variant (for Modals) */
+.data-table-sticky {
+    border: none;
+    border-radius: 0;
+    margin-bottom: 0;
+}
+
+.data-table-sticky th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f9f9f9;
+}
+
+/* Product Cell & Thumbnails */
 .product-cell {
     display: flex;
     align-items: center;
@@ -529,7 +624,7 @@ label {
     background-color: #f5f5f7;
 }
 
-/* Action Buttons in Table */
+/* Action Buttons */
 .action-btn {
     border: none;
     background: none;
@@ -548,11 +643,116 @@ label {
     background-color: #f5f5f7;
 }
 
-.edit-btn:hover { color: #0071e3; }
-.delete-btn:hover { color: #ff3b30; }
+.edit-btn:hover {
+    color: #0071e3;
+}
+
+.delete-btn:hover {
+    color: #ff3b30;
+}
+
+/* Sortable Links */
+.sortable-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.sortable-link:hover {
+    color: #0071e3;
+}
+
+.sortable-link .icon {
+    width: 11px;
+    height: 11px;
+    color: #86868b;
+}
+
+.sortable-link.active .icon {
+    color: #0071e3;
+}
 
 /* =========================================
-   11. TOGGLE SWITCHES
+   11. BULK ACTIONS HEADER
+   ========================================= */
+/* Hidden by default */
+.bulk-header {
+    background-color: #e3f1ff !important;
+    display: none;
+}
+
+.bulk-header th {
+    background-color: #e3f1ff !important;
+    padding: 8px 16px;
+    border-bottom: 1px solid #0071e3;
+}
+
+.bulk-actions-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.bulk-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.selected-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0071e3;
+}
+
+.bulk-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-bulk {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.1);
+    background-color: white;
+    color: #333;
+    transition: background 0.2s;
+}
+
+.btn-bulk:hover {
+    background-color: #f0f0f0;
+}
+
+.btn-bulk-delete {
+    background-color: #fff2f2;
+    color: #d60000;
+    border-color: #ffcfcf;
+}
+
+.btn-bulk-delete:hover {
+    background-color: #ffe6e6;
+}
+
+/* Classes to toggle visibility */
+.header-hidden {
+    display: none !important;
+}
+
+.header-visible {
+    display: table-row !important;
+}
+
+
+/* =========================================
+   12. TOGGLE SWITCHES
    ========================================= */
 .status-wrapper {
     display: flex;
@@ -596,14 +796,14 @@ label {
     background-color: white;
     transition: .4s;
     border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-input:checked + .slider {
+input:checked+.slider {
     background-color: #0071e3;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
     transform: translateX(16px);
 }
 
@@ -613,7 +813,7 @@ input:checked + .slider:before {
 }
 
 /* =========================================
-   12. GLOBAL MODALS
+   13. GLOBAL MODALS
    ========================================= */
 .modal-overlay {
     display: none;
@@ -635,7 +835,7 @@ input:checked + .slider:before {
 
 .modal-box {
     background: white;
-    width: 900px;
+    width: 1000px;
     max-width: 95%;
     max-height: 85%;
     border-radius: 12px;
@@ -667,7 +867,9 @@ input:checked + .slider:before {
     color: #86868b;
 }
 
-.btn-close-modal:hover { color: #1d1d1f; }
+.btn-close-modal:hover {
+    color: #1d1d1f;
+}
 
 .modal-body {
     flex: 1;
@@ -683,4 +885,118 @@ input:checked + .slider:before {
     gap: 10px;
     background: #fff;
     border-radius: 0 0 12px 12px;
+}
+
+/* =========================================
+   14. SIDEBAR TOGGLE & OVERLAY
+   ========================================= */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 900;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+}
+
+body.sidebar-open .sidebar-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+.sidebar-toggle-btn {
+    position: fixed;
+    left: 15px;
+    z-index: 999;
+    background: transparent;
+    border: none;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-toggle-btn .icon {
+    font-size: 20px;
+    color: #1d1d1f;
+}
+
+body.sidebar-open .sidebar-toggle-btn {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* =========================================
+   15. PAGINATION STYLES
+   ========================================= */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    margin-top: 10px;
+    border-top: 1px solid #e5e5ea;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: #6e6e73;
+}
+
+.pagination-links {
+    display: flex;
+    gap: 5px;
+}
+
+.page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 14px;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    background-color: white;
+    color: #1d1d1f;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.page-link:hover:not(.disabled):not(.active) {
+    background-color: #f5f5f7;
+    border-color: #0071e3;
+    color: #0071e3;
+}
+
+.page-link.active {
+    background-color: #0071e3;
+    border-color: #0071e3;
+    color: white;
+    font-weight: 500;
+}
+
+.page-link.disabled {
+    color: #aeaeae;
+    background-color: #f5f5f7;
+    cursor: not-allowed;
+    border-color: #e5e5ea;
+}
+
+.page-link .icon {
+    width: 10px;
+    height: 10px;
 }

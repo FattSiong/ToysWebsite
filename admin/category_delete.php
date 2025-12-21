@@ -25,7 +25,6 @@ if (isset($_GET['id'])) {
 
         // Commit the changes
         $pdo->commit();
-
     } catch (PDOException $e) {
         // If something goes wrong, roll back changes
         $pdo->rollBack();
@@ -38,4 +37,3 @@ if (isset($_GET['id'])) {
 // Replace 'category_list.php' with the actual name of your main categories file
 header('Location: category_list.php');
 exit();
-?>
