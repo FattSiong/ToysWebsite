@@ -25,15 +25,15 @@ if (is_post()) {
         
         $stmt = $_db->prepare("SELECT * FROM users WHERE email = ? OR username = ?");
         $stmt->execute([$login_id, $login_id]);
-        $user = $stmt->fetch(); 
+        $user = $stmt->fetch();
 
         if ($user) {
             // Verify Password
-            if (password_verify($password, $user->password_hash)) {
+            if (password_verify($password, $user['password_hash'])) {
                 // --- SUCCESS ---
-                if ($user->role === 'member' && empty($user->phone_number)) {
+                if ($user['role'] === 'member' && empty($user['phone_number'])) {
                     // DO NOT LOGIN YET. Set temporary partial ID.
-                    $_SESSION['partial_login_id'] = $user->user_id;
+                    $_SESSION['partial_login_id'] = $user['user_id'];
                     $_SESSION['remember_choice'] = $remember; // Carry over remember choice
                     redirect('verify_phone.php');
                 }
@@ -42,21 +42,21 @@ if (is_post()) {
 
                 // Store User Data in Session
                 $_SESSION['user'] = $user; 
-                $_SESSION['user_id'] = $user->user_id;
-                $_SESSION['role']    = $user->role;
-                $_SESSION['username'] = $user->username;
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['role']    = $user['role'];
+                $_SESSION['username'] = $user['username'];
 
                 // --- REMEMBER ME LOGIC ---
                 if ($remember) {
                     // USER WANTS TO BE REMEMBERED
-                    $token = bin2hex(random_bytes(32)); 
+                    $token = bin2hex(random_bytes(32));
                     $token_hash = hash('sha256', $token);
                     
                     $update = $_db->prepare("UPDATE users SET remember_token = ? WHERE user_id = ?");
-                    $update->execute([$token_hash, $user->user_id]);
+                    $update->execute([$token_hash, $user['user_id']]);
                     
                     // Set Persistent Cookie (30 days)
-                    $cookie_value = $user->user_id . ':' . $token;
+                    $cookie_value = $user['user_id'] . ':' . $token;
                     setcookie('remember_me', $cookie_value, time() + (86400 * 30), "/", "", false, true); 
 
                 } else {
@@ -70,7 +70,7 @@ if (is_post()) {
                     
                     // 2. Clear the token in the database
                     $update = $_db->prepare("UPDATE users SET remember_token = NULL WHERE user_id = ?");
-                    $update->execute([$user->user_id]);
+                    $update->execute([$user['user_id']]);
                     
                     // *** FIX: REMOVED THE MANUAL SESSION COOKIE RESET HERE ***
                     // PHP defaults to "Session Cookie" (expires on close) automatically.
@@ -78,8 +78,8 @@ if (is_post()) {
                 }
 
                 // Redirect based on Role
-                if ($user->role === 'admin') {
-                    redirect('admin/product_list.php'); 
+                if ($user['role'] === 'admin') {
+                    redirect('admin/dashboard.php');
                 } else {
                     redirect('index.php');
                 }
@@ -98,7 +98,7 @@ if (is_post()) {
 <div class="auth-container">
     <div class="auth-card">
         <h2 style="text-align:center; margin-bottom: 1.5rem; color: #333;">Welcome Back</h2>
-        
+
         <?php if (isset($_err['general'])): ?>
             <div class="alert alert-danger">
                 <?= encode($_err['general']) ?>

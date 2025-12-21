@@ -1,0 +1,11 @@
+/* 3. Main Content Container */
+main {
+    flex: 1; /* Pushes footer to bottom */
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}

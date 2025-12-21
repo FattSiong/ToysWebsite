@@ -76,7 +76,7 @@ switch ($sort_option) {
 }
 
 // 1. Include the Admin Header
-include './admin_header.php';
+include '../includes/header.php';
 ?>
 
 <div class="page-header">
@@ -148,7 +148,4 @@ include './admin_header.php';
     </tbody>
 </table>
 
-<?php
-// Include Admin Footer
-include './admin_footer.php';
-?>
+<?php include 'admin_footer.php'; ?>

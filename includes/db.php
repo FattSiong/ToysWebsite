@@ -3,7 +3,7 @@
 
 // 1. Database Credentials
 $host = 'localhost';
-$db_name = 'toy website database';
+$db_name = 'toy_website_database';
 $username = 'root';
 $password = '';
 

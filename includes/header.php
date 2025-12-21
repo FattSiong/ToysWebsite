@@ -1,98 +1,169 @@
 <?php
 // includes/header.php
 
-// Ensure DB connection is available
-if (!isset($pdo) && isset($_db)) {
-    $pdo = $_db; 
-} elseif (!isset($_db)) {
-    require_once __DIR__ . '/../base.php'; 
-    $pdo = $_db;
+// 1. Path & Session Setup
+$base_path = file_exists('base.php') ? '' : '../';
+
+if (!isset($_db)) {
+    require_once __DIR__ . '/../base.php';
 }
 
-// Ensure session is started if base.php didn't do it (safety check)
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Check login status based on what base.php or login.php sets
 $is_logged_in = isset($_SESSION['user_id']);
 $role = $_SESSION['role'] ?? '';
 $username = $_SESSION['username'] ?? 'Guest';
+$current_page = basename($_SERVER['PHP_SELF']);
 
-// Fetch Categories
-try {
-    $db = isset($pdo) ? $pdo : $_db; 
-    $stmt_cat = $db->query("SELECT * FROM categories ORDER BY name ASC");
-    $header_categories = $stmt_cat->fetchAll();
-} catch (PDOException $e) {
-    $header_categories = [];
-}
+// 2. Identify Page Type
+$is_admin_page = ($role === 'admin' && strpos($_SERVER['PHP_SELF'], '/admin/') !== false);
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Toy Shop</title>
-    
-    <!-- CSS Links -->
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/auth.css">
-    
-    <!-- Scripts & Fonts -->
+
+    <link rel="stylesheet" href="<?= $base_path ?>css/public.css">
+    <link rel="stylesheet" href="<?= $base_path ?>css/main_sidebar.css">
+
+    <?php if ($is_admin_page): ?>
+        <link rel="stylesheet" href="<?= $base_path ?>css/admin.css">
+        <link rel="stylesheet" href="<?= $base_path ?>css/icons.css">
+    <?php else: ?>
+        <link rel="stylesheet" href="<?= $base_path ?>css/auth.css">
+        <link rel="stylesheet" href="<?= $base_path ?>css/icons.css">
+    <?php endif; ?>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="<?= $base_path ?>js/sidebar.js" defer></script>
 </head>
+
 <body>
 
-<header>
-    <div class="header-container">
-        <a href="/index.php" class="logo">
-            <i class="fas fa-robot"></i> ToyShop
-        </a>
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-        <div class="search-bar">
-            <form action="/index.php" method="GET">
-                <input type="text" name="search" placeholder="Search toys...">
-                <button type="submit"><i class="fas fa-search"></i></button>
-            </form>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2><?php echo $is_logged_in ? htmlspecialchars($username) : 'Menu'; ?></h2>
         </div>
 
-        <nav>
-            <ul class="nav-links">
-                <li class="dropdown">
-                    <a href="#" class="dropbtn">Categories <i class="fas fa-chevron-down"></i></a>
-                    <div class="dropdown-content">
-                        <a href="/index.php">All Toys</a>
-                        <?php foreach ($header_categories as $cat): ?>
-                            <a href="/index.php?category=<?php echo $cat->category_id; ?>">
-                                <?php echo htmlspecialchars($cat->name); ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
+        <ul class="sidebar-menu">
+            <?php if ($role !== 'admin'): ?>
+                <li>
+                    <a href="<?= $base_path ?>index.php" class="<?= $current_page == 'index.php' ? 'active' : '' ?>">
+                        <i class="icon fas fa-home"></i> Home
+                    </a>
+                </li>
+            <?php endif; ?>
+
+            <?php if ($is_logged_in): ?>
+
+                <?php if ($role === 'admin'): ?>
+                    <li class="menu-label" style="padding: 10px 20px; color: #888; font-size: 0.8em; text-transform: uppercase;">Admin Tools</li>
+
+                    <li>
+                        <a href="<?= $base_path ?>admin/dashboard.php" class="<?= $current_page == 'dashboard.php' ? 'active' : '' ?>">
+                            <i class="icon fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= $base_path ?>admin/product_list.php" class="<?= $current_page == 'product_list.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-box"></i> Products
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= $base_path ?>admin/category_list.php" class="<?= $current_page == 'category_list.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-list"></i> Categories
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= $base_path ?>admin/order_list.php" class="<?= $current_page == 'order_list.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-shopping-cart"></i> Orders
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= $base_path ?>admin/member_list.php" class="<?= $current_page == 'member_list.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-users"></i> Members
+                        </a>
+                    </li>
+
+                    <li class="menu-label" style="padding: 10px 20px; color: #888; font-size: 0.8em; text-transform: uppercase;">Account</li>
+                <?php endif; ?>
+
+                <li>
+                    <a href="<?= $base_path ?>profile.php" class="<?= $current_page == 'profile.php' ? 'active' : '' ?>">
+                        <i class="icon fas fa-user"></i> My Profile
+                    </a>
                 </li>
 
-                <?php if ($is_logged_in): ?>
-                    
-                    <?php if ($role === 'admin'): ?>
-                        <li><a href="/admin/dashboard.php">Admin Panel</a></li>
-                    <?php else: ?>
-                        <li><a href="/cart.php" class="cart-icon">
-                            <i class="fas fa-shopping-bag"></i>
-                            <span class="badge">0</span>
-                        </a></li>
-                        <li><a href="/profile.php"><i class="fas fa-user"></i> <?= htmlspecialchars($username) ?></a></li>
-                    <?php endif; ?>
-                    
-                    <li><a href="/logout.php">Logout</a></li>
-                    
-                <?php else: ?>
-                    <li><a href="/login.php">Login</a></li>
-                    <li><a href="/register.php">Register</a></li>
+                <?php if ($role !== 'admin'): ?>
+                    <li>
+                        <a href="<?= $base_path ?>cart.php" class="<?= $current_page == 'cart.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-shopping-cart"></i> My Cart
+                        </a>
+                    </li>
                 <?php endif; ?>
-            </ul>
-        </nav>
-    </div>
-</header>
 
-<main>
+                <li>
+                    <a href="<?= $base_path ?>logout.php" class="logout-link">
+                        <i class="icon fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+
+            <?php else: ?>
+                <li>
+                    <a href="<?= $base_path ?>login.php" class="<?= $current_page == 'login.php' ? 'active' : '' ?>">
+                        <i class="icon fas fa-sign-in-alt"></i> Login
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= $base_path ?>register.php" class="<?= $current_page == 'register.php' ? 'active' : '' ?>">
+                        <i class="icon fas fa-user-plus"></i> Register
+                    </a>
+                </li>
+            <?php endif; ?>
+        </ul>
+    </nav>
+
+    <header>
+        <div class="header-container">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button id="sidebarToggle" class="sidebar-toggle-btn">
+                    <i class="icon fas fa-bars"></i>
+                </button>
+
+                <a href="<?= $base_path ?><?= $role === 'admin' ? 'admin/dashboard.php' : 'index.php' ?>" class="logo">
+                    <i class="icon fas fa-robot"></i> ToyShop
+                </a>
+            </div>
+
+            <?php if ($role !== 'admin'): ?>
+                <div class="search-bar">
+                    <form action="<?= $base_path ?>index.php" method="GET">
+                        <input type="text" name="search" placeholder="Search toys...">
+                        <button type="submit"><i class="icon fas fa-search"></i></button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <nav>
+                <ul class="nav-links">
+                    <?php if ($is_logged_in && $role !== 'admin'): ?>
+                        <li><a href="<?= $base_path ?>cart.php" class="cart-icon">
+                                <i class="icon fas fa-shopping-cart"></i>
+                                <span class="badge">0</span>
+                            </a></li>
+                    <?php endif; ?>
+
+                    <?php if ($is_logged_in): ?>
+                        <li><a href="<?= $base_path ?>profile.php"><i class="icon fas fa-user"></i></a></li>
+                    <?php else: ?>
+                        <li><a href="<?= $base_path ?>login.php">Login</a></li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
