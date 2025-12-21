@@ -100,7 +100,7 @@ include '../includes/header.php';
 <div class="details-container">
 
     <div class="details-nav">
-        <a href="member_list.php" class="back-btn"><i class="icon fa-arrow-left"></i> Back to Members</a>
+        <a href="member_list.php" class="back-btn"><i class="icon fa-arrow-left"></i> Back</a>
     </div>
 
     <?php if ($error_msg): ?>

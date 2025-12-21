@@ -1,13 +1,43 @@
 <?php
 session_start();
-// Include header (which should include db.php, but we check to be safe)
 require_once '../includes/header.php';
+// Ensure DB connection is available
 if (!isset($pdo)) {
     require_once '../includes/db.php';
 }
 
 // ==========================================
-// 1. DATA INITIALIZATION
+// 1. HELPER FUNCTIONS
+// ==========================================
+function fetchInventoryData($pdo, $condition)
+{
+    $labels = [];
+    $data   = [];
+    $sql = "SELECT c.name, COUNT(p.product_id) as count
+            FROM products p
+            JOIN product_categories pc ON p.product_id = pc.product_id
+            JOIN categories c ON pc.category_id = c.category_id
+            WHERE $condition
+            GROUP BY c.category_id
+            ORDER BY count DESC
+            LIMIT 5";
+
+    // Use try-catch to handle potential DB errors gracefully
+    try {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $labels[] = $row['name'];
+            $data[]   = $row['count'];
+        }
+    } catch (PDOException $e) {
+        error_log("Inventory Data Error: " . $e->getMessage());
+    }
+    return ['labels' => $labels, 'data' => $data];
+}
+
+// ==========================================
+// 2. DATA INITIALIZATION
 // ==========================================
 $total_revenue   = 0;
 $total_orders    = 0;
@@ -19,13 +49,10 @@ $trend_revenue   = [];
 $trend_orders    = [];
 $cat_labels      = [];
 $cat_data        = [];
-$inv_in_stock    = [];
-$inv_low_stock   = [];
-$inv_out_stock   = [];
 $top_products    = [];
 
 // ==========================================
-// 2. DATA FETCHING
+// 3. FETCH DATA
 // ==========================================
 try {
     // A. Top Cards Data
@@ -34,16 +61,21 @@ try {
     $total_products  = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn() ?: 0;
     $total_customers = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'member'")->fetchColumn() ?: 0;
 
-    // B. Sales Trend (Last 7 Months)
+    // B. Sales Trend (Last 7 Months calculated in PHP for timezone safety)
+    $start_date = date('Y-m-01', strtotime('-6 months')); // Start from 1st of 6 months ago
+
     $trend_sql = "SELECT 
                     DATE_FORMAT(order_date, '%b') as month_name, 
                     SUM(total_amount) as total,
                     COUNT(*) as order_count 
                   FROM orders 
-                  WHERE order_status != 'Cancelled' AND order_date >= DATE_SUB(NOW(), INTERVAL 7 MONTH)
+                  WHERE order_status != 'Cancelled' AND order_date >= :start_date
                   GROUP BY YEAR(order_date), MONTH(order_date) 
                   ORDER BY order_date ASC";
-    $stmt = $pdo->query($trend_sql);
+
+    $stmt = $pdo->prepare($trend_sql);
+    $stmt->execute([':start_date' => $start_date]);
+
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $trend_labels[]  = $row['month_name'];
         $trend_revenue[] = $row['total'];
@@ -60,33 +92,14 @@ try {
                 WHERE o.order_status != 'Cancelled'
                 GROUP BY c.category_id
                 ORDER BY revenue DESC LIMIT 5";
-    $stmt = $pdo->query($cat_sql);
+    $stmt = $pdo->prepare($cat_sql);
+    $stmt->execute();
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $cat_labels[] = $row['name'];
         $cat_data[]   = $row['revenue'];
     }
 
-    // D. Inventory Logic (Helper Function)
-    function fetchInventoryData($pdo, $condition)
-    {
-        $labels = [];
-        $data   = [];
-        $sql = "SELECT c.name, COUNT(p.product_id) as count
-                FROM products p
-                JOIN product_categories pc ON p.product_id = pc.product_id
-                JOIN categories c ON pc.category_id = c.category_id
-                WHERE $condition
-                GROUP BY c.category_id
-                ORDER BY count DESC
-                LIMIT 5";
-        $stmt = $pdo->query($sql);
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $labels[] = $row['name'];
-            $data[]   = $row['count'];
-        }
-        return ['labels' => $labels, 'data' => $data];
-    }
-
+    // D. Inventory Logic
     $inv_in_stock  = fetchInventoryData($pdo, "p.stock_quantity >= 100");
     $inv_low_stock = fetchInventoryData($pdo, "p.stock_quantity > 0 AND p.stock_quantity < 100");
     $inv_out_stock = fetchInventoryData($pdo, "p.stock_quantity = 0");
@@ -99,10 +112,11 @@ try {
                 WHERE o.order_status != 'Cancelled'
                 GROUP BY p.product_id 
                 ORDER BY sold DESC LIMIT 5";
-    $stmt = $pdo->query($top_sql);
+    $stmt = $pdo->prepare($top_sql);
+    $stmt->execute();
     $top_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    error_log("Dashboard Error: " . $e->getMessage());
+    error_log("Dashboard Critical Error: " . $e->getMessage());
 }
 ?>
 
@@ -201,7 +215,7 @@ try {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="3" style="text-align:center; color: #999;">No sales data found.</td>
+                                <td colspan="3" style="text-align:center; color: #999;">No sales data available.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

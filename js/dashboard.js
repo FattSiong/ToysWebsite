@@ -1,39 +1,47 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Safety check: ensure PHP passed the data
+    // Ensure data exists before proceeding
     if (typeof dashboardData === 'undefined') {
         console.warn('Dashboard data is missing.');
         return;
     }
 
     // ==========================================
-    // 1. SALES TREND CHART (Line Chart)
+    // 1. SALES TREND CHART (Gradient Line Chart)
     // ==========================================
     const ctxTrend = document.getElementById('salesTrendChart');
     if (ctxTrend) {
-        new Chart(ctxTrend.getContext('2d'), {
+        const ctx = ctxTrend.getContext('2d');
+
+        // Create Gradient for Revenue
+        const gradientRevenue = ctx.createLinearGradient(0, 0, 0, 300);
+        gradientRevenue.addColorStop(0, 'rgba(66, 133, 244, 0.4)'); // Top opacity
+        gradientRevenue.addColorStop(1, 'rgba(66, 133, 244, 0.0)'); // Bottom opacity
+
+        new Chart(ctx, {
             type: 'line',
             data: {
                 labels: dashboardData.salesTrend.labels,
                 datasets: [
                     {
-                        label: 'Revenue ($)',
+                        label: 'Revenue',
                         data: dashboardData.salesTrend.revenue,
-                        borderColor: '#4285F4', // Google Blue
-                        backgroundColor: 'rgba(66, 133, 244, 0.1)',
+                        borderColor: '#4285F4',
+                        backgroundColor: gradientRevenue,
                         borderWidth: 2,
-                        tension: 0.4,
+                        tension: 0.4, // Smooth curve
                         fill: true,
                         pointRadius: 4,
+                        pointHoverRadius: 6,
                         yAxisID: 'y'
                     },
                     {
                         label: 'Orders',
                         data: dashboardData.salesTrend.orders,
-                        borderColor: '#34A853', // Google Green
+                        borderColor: '#34A853',
                         backgroundColor: 'rgba(52, 168, 83, 0.1)',
                         borderWidth: 2,
-                        borderDash: [5, 5], // Dashed line
+                        borderDash: [5, 5], // Dashed line style
                         tension: 0.4,
                         fill: false,
                         pointRadius: 4,
@@ -45,14 +53,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { display: true, position: 'bottom' } },
+                plugins: {
+                    legend: { display: true, position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) {
+                                    // Add Currency formatting for Revenue
+                                    if (context.dataset.yAxisID === 'y') {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                    } else {
+                                        label += context.parsed.y;
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: { grid: { display: false } },
                     y: {
                         type: 'linear',
                         display: true,
                         position: 'left',
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) { return '$' + value; } // Add $ to Y-axis
+                        }
                     },
                     y1: {
                         type: 'linear',
@@ -67,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ==========================================
-    // 2. SALES BY CATEGORY (Doughnut Chart)
+    // 2. CATEGORY CHART (Doughnut Chart)
     // ==========================================
     const ctxCat = document.getElementById('categoryChart');
     if (ctxCat) {
@@ -85,11 +115,22 @@ document.addEventListener('DOMContentLoaded', function () {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '60%',
+                cutout: '70%',
                 plugins: {
                     legend: {
                         position: 'right',
-                        labels: { usePointStyle: true, boxWidth: 8, padding: 20 }
+                        labels: { usePointStyle: true, boxWidth: 8, padding: 15 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.label || '';
+                                if (label) { label += ': '; }
+                                // Currency format
+                                label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.raw);
+                                return label;
+                            }
+                        }
                     }
                 }
             }
@@ -101,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ==========================================
     const ctxInv = document.getElementById('inventoryChart');
     if (ctxInv) {
-        // Initial state: 'lowStock' as defined in HTML selected option
+        // Initial state: 'lowStock'
         let currentType = 'lowStock';
         const initialData = dashboardData.inventory[currentType];
 

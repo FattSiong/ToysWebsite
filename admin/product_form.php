@@ -203,7 +203,7 @@ include '../includes/header.php';
                 <div class="form-group">
                     <label for="name">Name</label>
                     <input type="text" id="name" name="name" class="form-input"
-                        placeholder="e.g., Short-sleeved T-shirt"
+                        placeholder="e.g., Remote Control Race Car"
                         value="<?= htmlspecialchars($name) ?>" required>
                 </div>
                 <div class="form-group">

@@ -129,12 +129,16 @@ try {
 <div class="filter-bar">
     <form action="" method="GET" class="filter-form">
         <div class="filter-group search-group">
-            <button type="button" class="search-submit-btn" onclick="this.form.submit()" title="Search">
+            <button type="submit" class="search-submit-btn">
                 <i class="icon fa-search"></i>
             </button>
             <input type="text" name="search" class="form-input search-input-field"
                 placeholder="Search Member"
                 value="<?= htmlspecialchars($search_query) ?>">
+
+            <?php if (!empty($search_query)): ?>
+                <a href="member_list.php" class="clear-search-btn" title="Clear Search"><i class="icon fa-close"></i></a>
+            <?php endif; ?>
         </div>
 
         <div class="filter-group sort-group">

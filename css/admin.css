@@ -388,6 +388,37 @@ label {
     padding-left: 36px;
 }
 
+.clear-search-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    text-decoration: none;
+    z-index: 5;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    font-size: 14px; 
+}
+
+.clear-search-btn:hover {
+    color: #fff;
+    background-color: #c7c7cc;
+}
+
+.clear-search-btn .icon {
+    width: 10px;
+    height: 10px;
+}
+
 .price-toggle-group {
     min-width: 200px;
 }

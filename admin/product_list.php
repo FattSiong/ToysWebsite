@@ -199,10 +199,20 @@ include '../includes/header.php';
 <div class="filter-bar">
     <form action="" method="GET" class="filter-form" id="filterForm">
         <?php if ($current_tab !== 'All'): ?><input type="hidden" name="status" value="<?= htmlspecialchars($current_tab) ?>"><?php endif; ?>
+
         <div class="filter-group search-group">
-            <button type="button" class="search-submit-btn" onclick="this.form.submit()"><i class="icon fa-search"></i></button>
+            <button type="submit" class="search-submit-btn">
+                <i class="icon fa-search"></i>
+            </button>
             <input type="text" name="search" class="form-input search-input-field" placeholder="Search Product" value="<?= htmlspecialchars($search_query) ?>">
+
+            <?php if (!empty($search_query)): ?>
+                <a href="?status=<?= htmlspecialchars($current_tab) ?>" class="clear-search-btn" title="Clear Search">
+                    <i class="icon fa-close"></i>
+                </a>
+            <?php endif; ?>
         </div>
+
         <div class="filter-group">
             <select name="category" class="form-select" onchange="this.form.submit()">
                 <option value="">Category</option>
@@ -212,6 +222,7 @@ include '../includes/header.php';
             </select>
             <i class="icon fa-filter icon-right"></i>
         </div>
+
         <div class="filter-group price-toggle-group">
             <?php $has_price = ($min_price !== '' || $max_price !== ''); ?>
             <button type="button" class="price-trigger-btn" id="priceBtn" style="display: <?= $has_price ? 'none' : 'flex' ?>;"><span>Price Range</span><i class="icon fa-filter icon-right" style="font-size: 10px; margin-left: auto;"></i></button>
