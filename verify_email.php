@@ -92,8 +92,8 @@ if (is_post()) {
         $token_data = $stmt->fetch(); // Using PDO::FETCH_OBJ from base.php
 
         if ($token_data) {
-            if ($token_data->token == $otp_input) {
-                if (strtotime($token_data->expires_at) < time()) {
+            if ($token_data['token'] == $otp_input) {
+                if (strtotime($token_data['expires_at']) < time()) {
                     $error = "Code expired. Please request a new code.";
                     $stmt_del_exp = $_db->prepare("DELETE FROM registration_tokens WHERE email = ?");
                     $stmt_del_exp->execute([$email]);
@@ -123,9 +123,9 @@ if (is_post()) {
                         $sql_insert = "INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, 'member')";
                         $stmt_insert = $_db->prepare($sql_insert);
                         $stmt_insert->execute([
-                            $generated_username, 
-                            $token_data->email, 
-                            $token_data->password_hash
+                            $generated_username,
+                            $token_data['email'],
+                            $token_data['password_hash']
                         ]);
 
                         // Delete token from registration_tokens

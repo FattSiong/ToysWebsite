@@ -10,7 +10,7 @@ if (!$_user) {
 
 // 2. Fetch latest user data (in case session is stale)
 $stm = $_db->prepare("SELECT * FROM users WHERE user_id = ?");
-$stm->execute([$_user->user_id]);
+$stm->execute([$_user['user_id']]);
 $user = $stm->fetch();
 
 // --- POST HANDLER: Update Profile Info ---
@@ -21,12 +21,12 @@ if (is_post() && post('action') == 'update_profile') {
     // Simple Validation
     if ($username == '') {
         $_err['username'] = 'Username cannot be empty';
-    } elseif ($username !== $user->username && is_exists($username, 'users', 'username')) {
+    } elseif ($username !== $user['username'] && is_exists($username, 'users', 'username')) {
         $_err['username'] = 'Username already taken';
     }
 
     // Process Photo Upload if provided
-    $photo = $user->profile_photo; // Keep old photo by default
+    $photo = $user['profile_photo']; // Keep old photo by default
     $f = get_file('photo'); // Helper from base.php
     
     if ($f) {
@@ -36,8 +36,8 @@ if (is_post() && post('action') == 'update_profile') {
         }
         
         // Remove old photo if exists
-        if ($user->profile_photo && file_exists("images/profiles/$user->profile_photo")) {
-            unlink("images/profiles/$user->profile_photo");
+        if ($user['profile_photo'] && file_exists("images/profiles/$user[profile_photo]")) {
+            unlink("images/profiles/$use[profile_photo]");
         }
 
         // Save new photo (Resize to 200x200 using base.php helper)
@@ -46,12 +46,12 @@ if (is_post() && post('action') == 'update_profile') {
 
     if (!$_err) {
         $stm = $_db->prepare("UPDATE users SET username = ?, phone_number = ?, profile_photo = ? WHERE user_id = ?");
-        $stm->execute([$username, $phone, $photo, $user->user_id]);
+        $stm->execute([$username, $phone, $photo, $user['user_id']]);
         
         // Update Session
-        $user->username = $username;
-        $user->phone_number = $phone;
-        $user->profile_photo = $photo;
+        $user['username'] = $username;
+        $user['phone_number'] = $phone;
+        $user['profile_photo'] = $photo;
         $_SESSION['user'] = $user;
         $_SESSION['username'] = $username;
 
@@ -67,7 +67,7 @@ if (is_post() && post('action') == 'change_password') {
     $confirm_pass = req('confirm_password');
 
     // Verify Old Password
-    if (!password_verify($current_pass, $user->password_hash)) {
+    if (!password_verify($current_pass, $user['password_hash'])) {
         $_err['current_password'] = 'Incorrect current password';
     }
 
@@ -83,7 +83,7 @@ if (is_post() && post('action') == 'change_password') {
         $new_hash = password_hash($new_pass, PASSWORD_DEFAULT);
         
         $stm = $_db->prepare("UPDATE users SET password_hash = ? WHERE user_id = ?");
-        $stm->execute([$new_hash, $user->user_id]);
+        $stm->execute([$new_hash, $user['user_id']]);
 
         temp('info', 'Password changed successfully!');
         redirect('profile.php');
@@ -108,7 +108,7 @@ if (is_post() && post('action') == 'change_password') {
                 
                 <div style="text-align: center; margin-bottom: 20px;">
                     <?php 
-                        $img = $user->profile_photo ? "images/profiles/$user->profile_photo" : "images/no-image.jpg"; 
+                        $img = $user['profile_photo'] ? "images/profiles/$user[profile_photo]" : "images/no-image.jpg"; 
                     ?>
                     <img src="<?= $img ?>" alt="Profile" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #eee;">
                     
@@ -120,18 +120,18 @@ if (is_post() && post('action') == 'change_password') {
 
                 <div class="form-group">
                     <label>Email (Cannot change)</label>
-                    <input type="text" value="<?= htmlspecialchars($user->email) ?>" disabled style="background: #f9f9f9; cursor: not-allowed;">
+                    <input type="text" value="<?= htmlspecialchars($user['email']) ?>" disabled style="background: #f9f9f9; cursor: not-allowed;">
                 </div>
 
                 <div class="form-group">
                     <label>Username</label>
-                    <?php html_text('username', "value='$user->username'"); ?>
+                    <?php html_text('username', "value='$user[username]'"); ?>
                     <?php err('username'); ?>
                 </div>
 
                 <div class="form-group">
                     <label>Phone Number</label>
-                    <input type="text" name="phone_number" value="<?= htmlspecialchars($_POST['phone_number'] ?? $user->phone_number) ?>">
+                    <input type="text" name="phone_number" value="<?= htmlspecialchars($_POST['phone_number'] ?? $user['phone_number']) ?>">
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Update Profile</button>

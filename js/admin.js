@@ -1,28 +1,3 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Sidebar logic
-    const sidebar = document.querySelector('.sidebar');
-    const toggleBtn = document.querySelector('#sidebarToggle');
-    const overlay = document.querySelector('#sidebarOverlay');
-    const body = document.body;
-
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            body.classList.toggle('sidebar-open');
-        });
-    }
-
-    if (overlay) {
-        overlay.addEventListener('click', () => {
-            body.classList.remove('sidebar-open');
-        });
-    }
-
-    // Initialize Bulk Controller if the table exists
-    if (document.querySelector('#bulkForm')) {
-        new BulkController();
-    }
-});
-
 /**
  * BulkController
  * Handles the logic for Select All, Row Selection, and Header Toggling
@@ -77,7 +52,7 @@ class BulkController {
                 e.preventDefault();
                 const action = btn.getAttribute('data-action');
                 const confirmMsg = btn.getAttribute('data-confirm');
-                
+
                 if (confirmMsg && !confirm(confirmMsg)) {
                     return;
                 }

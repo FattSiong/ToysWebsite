@@ -6,25 +6,34 @@
 
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
-// Configure session parameters BEFORE starting
-// This ensures cleaner cookies.
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
-
-session_start();
-
-// ============================================================================
-// Database Connection (MUST BE HERE, BEFORE ANY LOGIC)
-// ============================================================================
-
-try {
-    $_db = new PDO('mysql:dbname=toy_website_database', 'root', '', [
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Recommended for debugging
-    ]);
-} catch (PDOException $e) {
-    die("Database Connection Failed: " . $e->getMessage());
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.gc_maxlifetime', 1440); // Your specific value
+    ini_set('session.cookie_lifetime', 0);
+    session_start();
 }
+
+// ============================================================================
+// Database Connection (UNIFIED)
+// ============================================================================
+
+// 1. Check if the connection variable ($pdo) already exists.
+//    (It might exist if you came from index.php or admin pages)
+if (!isset($pdo)) {
+    // 2. If not, load the master file to create it.
+    //    We use __DIR__ so it always finds the file correctly.
+    $db_file = __DIR__ . '/includes/db.php';
+
+    if (file_exists($db_file)) {
+        require_once $db_file;
+    } else {
+        die("Error: Could not find database configuration at $db_file");
+    }
+}
+
+// 3. Link your variables together.
+//    Admin uses $pdo. Your helper functions use $_db. This makes them the same thing.
+global $_db;
+$_db = $pdo;
 
 // ============================================================================
 // Cookie Check (Remember Me) - MOVED TO TOP

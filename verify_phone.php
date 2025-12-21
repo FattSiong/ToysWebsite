@@ -126,19 +126,18 @@ if (is_post() && !isset($_POST['ajax_action'])) {
         // 3. Set Real Session
         session_regenerate_id(true);
         $_SESSION['user'] = $user;
-        $_SESSION['user_id'] = $user->user_id;
-        $_SESSION['role'] = $user->role;
-        $_SESSION['username'] = $user->username;
+        $_SESSION['user_id'] = $user['user_id'];
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['username'] = $user['username'];
 
         // 4. Handle "Remember Me" (passed from login.php)
         if (isset($_SESSION['remember_choice']) && $_SESSION['remember_choice'] == 1) {
             $token = bin2hex(random_bytes(32));
             $token_hash = hash('sha256', $token);
             $update = $_db->prepare("UPDATE users SET remember_token = ? WHERE user_id = ?");
-            $update->execute([$token_hash, $user->user_id]);
-            setcookie('remember_me', $user->user_id . ':' . $token, time() + (86400 * 30), "/", "", false, true);
+            $update->execute([$token_hash, $user['user_id']]);
+            setcookie('remember_me', $user['user_id'] . ':' . $token, time() + (86400 * 30), "/", "", false, true);
         }
-        
         // Cleanup
         unset($_SESSION['partial_login_id']);
         unset($_SESSION['remember_choice']);
@@ -159,7 +158,7 @@ if (is_post() && !isset($_POST['ajax_action'])) {
         <?php endif; ?>
 
         <form method="post" id="verifyForm">
-            
+
             <div class="form-group">
                 <label>Phone Number</label>
                 <input type="text" name="phone_number" id="phone_number" class="form-control" 

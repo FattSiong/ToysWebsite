@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-include 'admin_header.php';
+include '../includes/header.php';
 ?>
 
 <link rel="stylesheet" href="../css/category_form.css">

@@ -82,7 +82,7 @@ $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-include 'admin_header.php';
+include '../includes/header.php';
 ?>
 
 <div class="page-header">
