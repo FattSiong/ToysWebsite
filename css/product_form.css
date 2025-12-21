@@ -1,7 +1,4 @@
 /* css/product_form.css */
-/* Contains styles ONLY for product_form.php specific elements.
-   Global form styles (inputs, cards, buttons) are in admin.css.
-*/
 
 /* --- PAGE LAYOUT --- */
 .product-form {
@@ -22,13 +19,12 @@
     min-width: 250px;
 }
 
-/* --- MEDIA UPLOADER (Specific to Product Form) --- */
+/* --- MEDIA UPLOADER --- */
 .media-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding-bottom: 0;
-    /* Override generic card padding if needed */
 }
 
 .media-upload-box {
@@ -171,4 +167,36 @@
 
 .primary-select-overlay:hover .star-icon {
     color: #ffe082;
+}
+
+/* --- CATEGORY LIST --- */
+.category-checkbox-list {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    padding: 10px;
+    background: #fafafa;
+}
+
+.cat-item {
+    display: block;
+    margin-bottom: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+}
+
+.cat-item input {
+    margin-right: 8px;
+}
+
+/* --- NOTIFICATIONS / ERRORS --- */
+.error-banner {
+    background: #fee;
+    color: #c00;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #fcc;
 }

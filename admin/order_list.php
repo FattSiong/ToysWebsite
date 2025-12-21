@@ -2,8 +2,7 @@
 // Start session
 session_start();
 
-// --- MOCK DATA (For Design Purposes) ---
-// Remove this block when you implement real database fetching
+// --- MOCK DATA ---
 $orders = [
     [
         'order_id' => 1001,
@@ -25,11 +24,8 @@ $orders = [
     ]
 ];
 
-// Handle Search Logic (Placeholder)
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
-
 $sort_option = $_GET['sort'] ?? '';
-
 $sql = "";
 
 // 1. SORT LOGIC
@@ -51,7 +47,6 @@ switch ($sort_option) {
         break;
 }
 
-// 1. Include the Admin Header
 include '../includes/header.php';
 ?>
 
@@ -104,12 +99,12 @@ include '../includes/header.php';
                     <td><?= date('M d, Y h:i A', strtotime($row['order_date'])) ?></td>
                     <td>
                         <?php
-                        $statusColor = '#333';
-                        if ($row['status'] === 'Completed') $statusColor = 'green';
-                        if ($row['status'] === 'Cancelled') $statusColor = 'red';
-                        if ($row['status'] === 'Pending') $statusColor = 'orange';
+                        $statusClass = 'status-gray';
+                        if ($row['status'] === 'Completed') $statusClass = 'status-green';
+                        if ($row['status'] === 'Cancelled') $statusClass = 'status-red';
+                        if ($row['status'] === 'Pending') $statusClass = 'status-orange';
                         ?>
-                        <span style="color: <?= $statusColor ?>; font-weight: 500;">
+                        <span class="text-status <?= $statusClass ?>">
                             <?= htmlspecialchars($row['status']) ?>
                         </span>
                     </td>

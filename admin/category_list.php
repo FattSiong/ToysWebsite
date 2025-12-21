@@ -108,7 +108,6 @@ include '../includes/header.php';
     </form>
 </div>
 
-<!-- BULK ACTION FORM -->
 <form method="POST" action="" id="bulkForm">
     <input type="hidden" name="bulk_action" id="bulk-action-input" value="">
 
@@ -152,7 +151,6 @@ include '../includes/header.php';
             $sortCount = getSortParams('count', $sort_option);
             ?>
 
-            <!-- DEFAULT HEADER -->
             <tr id="default-header">
                 <th style="width: 40px;"><input type="checkbox" id="selectAllDefault"></th>
                 <th><a href="<?= $sortName['url'] ?>" class="sortable-link <?= $sortName['class'] ?>">Category <i class="icon fa <?= $sortName['icon'] ?>"></i></a></th>
@@ -160,7 +158,6 @@ include '../includes/header.php';
                 <th>Action</th>
             </tr>
 
-            <!-- BULK HEADER -->
             <tr id="bulk-header" class="bulk-header">
                 <th style="width: 40px;">
                     <input type="checkbox" id="selectAllBulk">
@@ -170,7 +167,6 @@ include '../includes/header.php';
                 </th>
                 <th colspan="2">
                     <div class="bulk-buttons" style="justify-content: flex-end;">
-                        <!-- Categories just have bulk delete -->
                         <button type="button" class="btn-bulk btn-bulk-delete" data-action="delete" data-confirm="Are you sure? This will delete selected categories.">Delete</button>
                     </div>
                 </th>
@@ -182,9 +178,9 @@ include '../includes/header.php';
                     <tr>
                         <td><input type="checkbox" name="selected_ids[]" value="<?= $row['category_id'] ?>" class="row-checkbox"></td>
                         <td>
-                            <span style="font-weight: 500; color: #333;"><?= htmlspecialchars($row['name']) ?></span>
+                            <span class="row-title"><?= htmlspecialchars($row['name']) ?></span>
                             <?php if (!empty($row['description'])): ?>
-                                <div style="font-size: 0.85em; color: #888; margin-top: 2px;">
+                                <div class="row-subtitle">
                                     <?= htmlspecialchars(substr($row['description'], 0, 50)) . (strlen($row['description']) > 50 ? '...' : '') ?>
                                 </div>
                             <?php endif; ?>

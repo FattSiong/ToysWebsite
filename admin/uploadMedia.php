@@ -1,5 +1,4 @@
 <?php
-// uploadMedia.php
 require_once '../lib/SimpleImage.php';
 
 /**
@@ -10,21 +9,27 @@ require_once '../lib/SimpleImage.php';
  */
 function uploadProductMedia($pdo, $product_id, $files)
 {
-    // 1. Directory Setup
+    // ==========================================
+    // 1. DIRECTORY SETUP
+    // ==========================================
     $targetDir = '../uploads/products/';
     if (!is_dir($targetDir)) {
         mkdir($targetDir, 0755, true);
     }
 
-    // 2. Check existing Primary status
-    // We need to know if we should assign 'is_primary = 1' to a new upload
+    // ==========================================
+    // 2. CHECK PRIMARY STATUS
+    // ==========================================
+    // Check if the product already has a primary image
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM product_media WHERE product_id = ? AND is_primary = 1");
     $stmt->execute([$product_id]);
     $hasPrimary = $stmt->fetchColumn() > 0;
 
-    // 3. Normalize $_FILES array for iteration
+    // ==========================================
+    // 3. PROCESS FILES
+    // ==========================================
     $fileCount = count($files['name']);
-    
+
     for ($i = 0; $i < $fileCount; $i++) {
         // Skip errors or empty slots
         if ($files['error'][$i] !== UPLOAD_ERR_OK) {
@@ -36,7 +41,7 @@ function uploadProductMedia($pdo, $product_id, $files)
         $fileType = $files['type'][$i];
 
         $uploadedPath = null;
-        $mediaType = '';
+        $mediaType    = '';
 
         // --- A. IMAGE HANDLER (SimpleImage) ---
         if (strpos($fileType, 'image/') === 0) {
@@ -49,34 +54,31 @@ function uploadProductMedia($pdo, $product_id, $files)
                 // Process with SimpleImage
                 $image = new SimpleImage();
                 $image->fromFile($tmpName)
-                      ->autoOrient()        // Fix rotation
-                      ->bestFit(1200, 1200) // Resize max dim to 1200px
-                      ->toFile($dest, null, 85); // Save at 85% quality
+                    ->autoOrient()         // Fix rotation from mobile uploads
+                    ->bestFit(1200, 1200)  // Resize max dimensions
+                    ->toFile($dest, null, 85); // Save at 85% quality
 
-                $uploadedPath = 'uploads/products/' . $newName; // Path for DB
-                $mediaType = 'image';
-
+                $uploadedPath = 'uploads/products/' . $newName; // DB Path
+                $mediaType    = 'image';
             } catch (Exception $e) {
                 // error_log("Image upload failed: " . $e->getMessage());
-                continue; // Skip this file
+                continue;
             }
-        } 
+        }
         // --- B. VIDEO HANDLER (Native) ---
         elseif (strpos($fileType, 'video/') === 0) {
             try {
                 $allowed = ['mp4', 'webm', 'ogg', 'mov'];
                 $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                
-                if (!in_array($ext, $allowed)) {
-                    continue; 
-                }
 
-                $newName = uniqid('vid_', true) . '.' . $ext;
-                $dest = $targetDir . $newName;
+                if (in_array($ext, $allowed)) {
+                    $newName = uniqid('vid_', true) . '.' . $ext;
+                    $dest = $targetDir . $newName;
 
-                if (move_uploaded_file($tmpName, $dest)) {
-                    $uploadedPath = 'uploads/products/' . $newName; // Path for DB
-                    $mediaType = 'video';
+                    if (move_uploaded_file($tmpName, $dest)) {
+                        $uploadedPath = 'uploads/products/' . $newName; // DB Path
+                        $mediaType    = 'video';
+                    }
                 }
             } catch (Exception $e) {
                 continue;
@@ -85,12 +87,11 @@ function uploadProductMedia($pdo, $product_id, $files)
 
         // --- C. DATABASE INSERT ---
         if ($uploadedPath && $mediaType) {
-            // Logic: If no primary exists AND this is an image, make it primary.
-            // Videos are forced to 0.
+            // Auto-assign primary if none exists and this is an image
             $isPrimary = 0;
             if (!$hasPrimary && $mediaType === 'image') {
                 $isPrimary = 1;
-                $hasPrimary = true; // Flag that we now have a primary
+                $hasPrimary = true; // Update flag
             }
 
             $sql = "INSERT INTO product_media (product_id, media_type, file_path, is_primary) VALUES (?, ?, ?, ?)";
@@ -98,4 +99,3 @@ function uploadProductMedia($pdo, $product_id, $files)
         }
     }
 }
-?>

@@ -6,11 +6,14 @@
 class BulkController {
     constructor() {
         this.bulkForm = document.getElementById('bulkForm');
+        // If the form doesn't exist on this page (e.g., Dashboard), stop execution
+        if (!this.bulkForm) return;
+
         this.selectAllDefault = document.getElementById('selectAllDefault');
         this.selectAllBulk = document.getElementById('selectAllBulk');
-        
+
         this.tbody = document.querySelector('.data-table tbody');
-        
+
         this.defaultHeader = document.getElementById('default-header');
         this.bulkHeader = document.getElementById('bulk-header');
         this.selectedCountSpan = document.getElementById('selected-count');
@@ -58,7 +61,7 @@ class BulkController {
                 }
 
                 // Set the hidden input value and submit
-                if(this.bulkActionInput) {
+                if (this.bulkActionInput) {
                     this.bulkActionInput.value = action;
                     this.bulkForm.submit();
                 }
@@ -70,9 +73,9 @@ class BulkController {
         // Always query the current visible checkboxes
         const checkboxes = document.querySelectorAll('.row-checkbox');
         checkboxes.forEach(cb => cb.checked = isChecked);
-        
-        if(this.selectAllDefault) this.selectAllDefault.checked = isChecked;
-        if(this.selectAllBulk) this.selectAllBulk.checked = isChecked;
+
+        if (this.selectAllDefault) this.selectAllDefault.checked = isChecked;
+        if (this.selectAllBulk) this.selectAllBulk.checked = isChecked;
 
         this.updateState();
     }
@@ -80,7 +83,7 @@ class BulkController {
     updateState() {
         // 1. Get all currently visible checkboxes in the DOM
         const checkboxes = document.querySelectorAll('.row-checkbox');
-        
+
         // 2. Count how many are checked
         const selected = Array.from(checkboxes).filter(cb => cb.checked);
         const count = selected.length;
@@ -94,22 +97,27 @@ class BulkController {
         // 4. Toggle Headers
         if (count > 0) {
             // Show Bulk, Hide Default
-            this.defaultHeader.classList.add('header-hidden');
-            this.bulkHeader.classList.add('header-visible');
-            
+            if (this.defaultHeader) this.defaultHeader.classList.add('header-hidden');
+            if (this.bulkHeader) this.bulkHeader.classList.add('header-visible');
+
             // Sync Master Checkbox
             const allChecked = total > 0 && count === total;
             if (this.selectAllBulk) this.selectAllBulk.checked = allChecked;
             if (this.selectAllDefault) this.selectAllDefault.checked = allChecked;
-            
+
         } else {
             // Show Default, Hide Bulk
-            this.defaultHeader.classList.remove('header-hidden');
-            this.bulkHeader.classList.remove('header-visible');
-            
+            if (this.defaultHeader) this.defaultHeader.classList.remove('header-hidden');
+            if (this.bulkHeader) this.bulkHeader.classList.remove('header-visible');
+
             // Reset masters
             if (this.selectAllDefault) this.selectAllDefault.checked = false;
             if (this.selectAllBulk) this.selectAllBulk.checked = false;
         }
     }
 }
+
+// --- INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+    new BulkController();
+});
