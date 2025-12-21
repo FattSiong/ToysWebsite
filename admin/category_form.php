@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-include 'admin_header.php';
+include '../includes/header.php';
 ?>
 
 <link rel="stylesheet" href="../css/category_form.css">
@@ -132,7 +132,7 @@ include 'admin_header.php';
             <div id="empty-state" class="empty-state">
                 <h4>Add products to the category</h4>
                 <p>Products added will be displayed here.</p>
-                <button type="button" class="btn-choose" id="emptyAddBtn">Choose products</button>
+                <button type="button" class="btn-outline" id="emptyAddBtn">Choose products</button>
             </div>
 
             <table class="products-table" id="selected-table" style="display: none;">
@@ -146,7 +146,7 @@ include 'admin_header.php';
                     </tr>
                 </thead>
                 <tbody id="selected-tbody">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
@@ -163,7 +163,7 @@ include 'admin_header.php';
             <h3>Select products</h3>
             <button type="button" class="btn-close-modal" id="closeModalBtn">&times;</button>
         </div>
-        
+
         <div class="modal-filters filter-bar">
             <div class="filter-group search-group">
                 <button type="button" class="search-submit-btn">
@@ -208,7 +208,7 @@ include 'admin_header.php';
                     </tr>
                 </thead>
                 <tbody id="modal-tbody">
-                    </tbody>
+                </tbody>
             </table>
         </div>
         <div class="modal-footer">

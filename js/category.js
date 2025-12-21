@@ -104,8 +104,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td>
-                    <div class="prod-cell">
-                        <img src="${imgSrc}" class="prod-thumb">
+                    <div class="product-cell">
+                        <img src="${imgSrc}" class="product-thumb">
                         <span>${product.name}</span>
                     </div>
                 </td>
@@ -184,8 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><input type="checkbox" class="modal-chk" value="${product.product_id}" ${isChecked ? 'checked' : ''}></td>
                 <td>${index + 1}</td>
                 <td>
-                    <div class="prod-cell">
-                        <img src="${imgSrc}" class="prod-thumb">
+                    <div class="product-cell">
+                        <img src="${imgSrc}" class="product-thumb">
                         <span>${product.name}</span>
                     </div>
                 </td>

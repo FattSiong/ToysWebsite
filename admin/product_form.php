@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
-require_once 'media_helper.php';
+require_once 'uploadMedia.php';
 
 // Initialize variables
 $product_id = null;
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = !empty($_POST['price']) ? $_POST['price'] : 0.00;
     $stock_quantity = !empty($_POST['stock_quantity']) ? $_POST['stock_quantity'] : 0;
     $status = isset($_POST['status']) ? 'Active' : 'Inactive';
-    
+
     // Get Selected Categories (Array)
     $selected_categories = isset($_POST['category_ids']) ? $_POST['category_ids'] : [];
 
@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-include 'admin_header.php';
+include '../includes/header.php';
 ?>
 
 <link rel="stylesheet" href="../css/product_form.css">
@@ -186,6 +186,7 @@ include 'admin_header.php';
         padding: 10px;
         background: #fafafa;
     }
+
     .cat-item {
         display: block;
         margin-bottom: 5px;
@@ -193,6 +194,7 @@ include 'admin_header.php';
         font-size: 14px;
         color: #333;
     }
+
     .cat-item input {
         margin-right: 8px;
     }
@@ -225,9 +227,7 @@ include 'admin_header.php';
         </div>
 
         <div class="card">
-            <div class="card-header media-header">
-                <div class="media-title">Media</div>
-            </div>
+            <div class="card-header">Media</div>
             <div class="card-body">
                 <label class="media-upload-box" id="drop-zone" for="file-upload">
                     <div class="upload-content">
@@ -246,10 +246,18 @@ include 'admin_header.php';
                         <?php foreach ($media_files as $media): ?>
                             <div class="preview-item">
                                 <button type="button" class="preview-remove-btn" onclick="markForDeletion(this, <?= $media['media_id'] ?>)">×</button>
-                                <label class="primary-select-overlay" title="Set as Main Photo">
-                                    <input type="radio" name="primary_media_id" value="<?= $media['media_id'] ?>" <?= $media['is_primary'] ? 'checked' : '' ?>>
-                                    <span class="star-icon">★</span>
-                                </label>
+                                <?php
+                                // --- CHANGE STARTS HERE --- 
+                                // Only show the "Primary" star selection if it is an IMAGE
+                                if ($media['media_type'] === 'image'):
+                                ?>
+                                    <label class="primary-select-overlay" title="Set as Main Photo">
+                                        <input type="radio" name="primary_media_id" value="<?= $media['media_id'] ?>" <?= $media['is_primary'] ? 'checked' : '' ?>>
+                                        <span class="star-icon"><i class="icon fa-star"></i></span>
+                                    </label>
+                                <?php endif;
+                                // --- CHANGE ENDS HERE --- 
+                                ?>
 
                                 <?php
                                 $path_from_db = $media['file_path'];
@@ -289,7 +297,7 @@ include 'admin_header.php';
         <div class="card">
             <div class="card-header">Organization</div>
             <div class="card-body">
-                
+
                 <div class="form-group">
                     <label>Categories</label>
                     <div class="category-checkbox-list">
@@ -298,10 +306,10 @@ include 'admin_header.php';
                         <?php else: ?>
                             <?php foreach ($categories as $cat): ?>
                                 <label class="cat-item">
-                                    <input type="checkbox" 
-                                           name="category_ids[]" 
-                                           value="<?= $cat['category_id'] ?>"
-                                           <?= in_array($cat['category_id'], $assigned_category_ids) ? 'checked' : '' ?>>
+                                    <input type="checkbox"
+                                        name="category_ids[]"
+                                        value="<?= $cat['category_id'] ?>"
+                                        <?= in_array($cat['category_id'], $assigned_category_ids) ? 'checked' : '' ?>>
                                     <?= htmlspecialchars($cat['name']) ?>
                                 </label>
                             <?php endforeach; ?>
@@ -336,7 +344,7 @@ include 'admin_header.php';
 </form>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="../js/media.js"></script>
+<script src="../js/uploadMedia.js"></script>
 <script src="../js/product.js"></script>
 
 <?php include 'admin_footer.php'; ?>
