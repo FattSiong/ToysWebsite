@@ -1,55 +1,89 @@
 <?php 
 include 'includes/header.php'; 
-include 'includes/navbar.php'; 
 
-// Helper function to generate star HTML
+// Ensure database connection is available (using base.php or includes/db.php)
+// $pdo is usually set in base.php/includes/header.php
+if (!isset($pdo) && isset($_db)) {
+    $pdo = $_db;
+}
+
+// 1. Fetch Categories for the Dropdown
+$cat_stmt = $pdo->prepare("SELECT * FROM categories ORDER BY name ASC");
+$cat_stmt->execute();
+$categories = $cat_stmt->fetchAll();
+
+// 2. Helper function for Stars
 function displayStars($rating) {
-    $rating = round($rating * 2) / 2; // Round to nearest 0.5
+    $rating = round($rating * 2) / 2;
     $output = '';
     for ($i = 1; $i <= 5; $i++) {
         if ($i <= $rating) {
-            $output .= '<i class="fas fa-star text-warning"></i>'; // Full Star
+            $output .= '<i class="fas fa-star text-warning"></i>';
         } elseif ($i - 0.5 <= $rating) {
-            $output .= '<i class="fas fa-star-half-alt text-warning"></i>'; // Half Star
+            $output .= '<i class="fas fa-star-half-alt text-warning"></i>';
         } else {
-            $output .= '<i class="far fa-star text-muted"></i>'; // Empty Star
+            $output .= '<i class="far fa-star text-muted" style="color: #ccc !important;"></i>';
         }
     }
     return $output;
 }
 ?>
 
-<!-- Main Content -->
-<div class="shop-container">
-    <div class="welcome-banner mb-5 text-center p-5 bg-light rounded-3 shadow-sm">
-        <h1 class="display-4 fw-bold text-primary">Welcome to ToyShop</h1>
-        <p class="lead text-secondary">Find the best toys for your kids!</p>
+<link rel="stylesheet" href="css/index.css">
+
+<div class="container mt-4 mb-5">
+    
+    <div class="hero-section">
+        <h1>Welcome to ToyShop!</h1>
+        <p>Discover the perfect toys to spark joy and imagination.</p>
+        <a href="#products" class="btn-hero">Explore Collection</a>
     </div>
 
-    <div class="row">
-        <div class="col-12 mb-3">
-            <h2>Our Toys</h2>
-        </div>
+    <div class="filter-bar" id="products">
+        <form action="index.php" method="GET" class="filter-form">
+            <div class="filter-group">
+                <input type="text" 
+                       name="search" 
+                       class="filter-search" 
+                       placeholder="Search for toys..." 
+                       value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+            </div>
 
+            <div class="filter-group">
+                <select name="category" class="filter-select">
+                    <option value="">All Categories</option>
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?php echo $cat['category_id']; ?>" 
+                            <?php echo (isset($_GET['category']) && $_GET['category'] == $cat['category_id']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($cat['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-filter">Search</button>
+            <?php if(isset($_GET['search']) || isset($_GET['category'])): ?>
+                <a href="index.php" class="btn-reset">Reset</a>
+            <?php endif; ?>
+        </form>
+    </div>
+
+    <div class="product-grid">
         <?php
-        // SEARCH LOGIC
+        // Prepare Query
         $search = isset($_GET['search']) ? "%" . $_GET['search'] . "%" : "%";
-        $cat_id = isset($_GET['category']) ? $_GET['category'] : null;
+        $cat_id = isset($_GET['category']) && $_GET['category'] !== '' ? $_GET['category'] : null;
 
-        // SQL QUERY UPDATED FOR NEW DB STRUCTURE
         $sql = "SELECT p.*, pm.file_path,
                 (SELECT AVG(rating) FROM reviews r WHERE r.product_id = p.product_id) as avg_rating,
                 (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.product_id) as review_count
                 FROM products p 
-                LEFT JOIN product_media pm ON p.product_id = pm.product_id AND pm.is_primary = 1
-                ";
+                LEFT JOIN product_media pm ON p.product_id = pm.product_id AND pm.is_primary = 1";
         
-        // If a category is selected, we must JOIN the new 'product_categories' table
         if ($cat_id) {
             $sql .= " JOIN product_categories pc ON p.product_id = pc.product_id ";
         }
 
-        // Fix: Status is now 'Active' (Capital A)
         $sql .= " WHERE p.name LIKE ? AND p.stock_quantity > 0 AND p.status = 'Active'";
         
         $params = [$search];
@@ -59,8 +93,7 @@ function displayStars($rating) {
             $params[] = $cat_id;
         }
 
-        // Prevent duplicates if product has multiple categories
-        $sql .= " GROUP BY p.product_id";
+        $sql .= " GROUP BY p.product_id ORDER BY p.product_id DESC";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -68,32 +101,50 @@ function displayStars($rating) {
 
         if (count($products) > 0) {
             foreach ($products as $product) {
-                $imgUrl = !empty($product['file_path']) ? $product['file_path'] : "https://via.placeholder.com/300";
+                $imgUrl = !empty($product['file_path']) ? $product['file_path'] : "images/products/no_image.jpg";
                 $rating = $product['avg_rating'] ?? 0;
                 $count = $product['review_count'];
                 ?>
-                <div class="col-md-3 mb-4">
-                    <div class="card h-100 shadow-sm border-0 product-card">
-                        <div style="height: 200px; padding: 10px; display: flex; align-items: center; justify-content: center;">
-                            <img src="<?php echo htmlspecialchars($imgUrl); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" style="max-height: 100%; max-width: 100%; object-fit: contain;">
-                        </div>
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-truncate"><?php echo htmlspecialchars($product['name']); ?></h5>
-                            <div class="mb-2">
-                                <small>
-                                    <?php echo displayStars($rating); ?>
-                                    <span class="text-muted ms-1">(<?php echo $count; ?>)</span>
-                                </small>
+
+                <a href="member/product_detail.php?id=<?php echo $product['product_id']; ?>" class="product-card-link">
+                    <div class="product-card">
+
+                        <img src="<?php echo htmlspecialchars($imgUrl); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+
+                        <div class="card-body">
+                            <h3 title="<?php echo htmlspecialchars($product['name']); ?>">
+                                <?php echo htmlspecialchars($product['name']); ?>
+                            </h3>
+
+                            <div class="rating-container">
+                                <?php 
+                                // Star Logic with 'icon' class added
+                                $r = round($rating * 2) / 2;
+                                for ($i = 1; $i <= 5; $i++) {
+                                    if ($i <= $r) {
+                                        // Full Star
+                                        echo '<i class="icon fas fa-star star-active"></i>';
+                                    } elseif ($i - 0.5 <= $r) {
+                                        // Half Star (Requires the new .fa-star-half-alt in icons.css)
+                                        echo '<i class="icon fas fa-star-half-alt star-active"></i>';
+                                    } else {
+                                        // Empty Star (Gray Full Star)
+                                        echo '<i class="icon fas fa-star star-inactive"></i>'; 
+                                    }
+                                }
+                                ?>
+                                <span class="text-muted"> (<?php echo $count; ?>)</span>
                             </div>
-                            <p class="card-text text-primary fw-bold fs-5">RM <?php echo number_format($product['price'], 2); ?></p>
-                            <a href="product_detail.php?id=<?php echo $product['product_id']; ?>" class="btn btn-outline-primary w-100 rounded-pill">View Details</a>
+
+                            <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
                         </div>
                     </div>
-                </div>
+                </a>
+
                 <?php
             }
         } else {
-            echo "<div class='col-12'><div class='alert alert-warning text-center'>No products found matching your search.</div></div>";
+            echo "<div style='grid-column: 1 / -1;'><div class='alert alert-warning text-center'>No toys found.</div></div>";
         }
         ?>
     </div>
