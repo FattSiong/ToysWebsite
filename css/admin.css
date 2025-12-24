@@ -29,8 +29,6 @@ a {
     position: relative;
 }
 
-
-
 /* =========================================
    4. MAIN CONTENT AREA
    ========================================= */
@@ -135,7 +133,6 @@ a {
     text-decoration: underline;
 }
 
-/* Used for secondary actions (e.g. Choose products) */
 .btn-outline {
     background-color: white;
     color: #0071e3;
@@ -176,14 +173,12 @@ a {
     align-items: center;
 }
 
-/* Header variant for media or flex layouts */
 .card-header-flex {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* Action button inside card header (e.g., "+ Add Products") */
 .card-header-action {
     background: none;
     border: none;
@@ -335,7 +330,6 @@ label {
     align-items: center;
 }
 
-/* Variant for inside modals */
 .modal-filter-bar {
     padding: 12px 20px;
     border-bottom: 1px solid #e5e5ea;
@@ -394,7 +388,37 @@ label {
     padding-left: 36px;
 }
 
-/* Price Filters */
+.clear-search-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    text-decoration: none;
+    z-index: 5;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    font-size: 14px; 
+}
+
+.clear-search-btn:hover {
+    color: #fff;
+    background-color: #c7c7cc;
+}
+
+.clear-search-btn .icon {
+    width: 10px;
+    height: 10px;
+}
+
 .price-toggle-group {
     min-width: 200px;
 }
@@ -490,7 +514,6 @@ label {
     background-color: #fafafa;
 }
 
-/* Sticky Header Variant (for Modals) */
 .data-table-sticky {
     border: none;
     border-radius: 0;
@@ -504,7 +527,6 @@ label {
     background-color: #f9f9f9;
 }
 
-/* Product Cell & Thumbnails */
 .product-cell {
     display: flex;
     align-items: center;
@@ -520,7 +542,6 @@ label {
     background-color: #f5f5f7;
 }
 
-/* Action Buttons */
 .action-btn {
     border: none;
     background: none;
@@ -547,7 +568,6 @@ label {
     color: #ff3b30;
 }
 
-/* Sortable Links */
 .sortable-link {
     display: flex;
     align-items: center;
@@ -575,7 +595,6 @@ label {
 /* =========================================
    11. BULK ACTIONS HEADER
    ========================================= */
-/* Hidden by default */
 .bulk-header {
     background-color: #e3f1ff !important;
     display: none;
@@ -637,7 +656,6 @@ label {
     background-color: #ffe6e6;
 }
 
-/* Classes to toggle visibility */
 .header-hidden {
     display: none !important;
 }
@@ -783,7 +801,6 @@ input:checked+.slider:before {
     border-radius: 0 0 12px 12px;
 }
 
-
 /* =========================================
    15. PAGINATION STYLES
    ========================================= */
@@ -846,3 +863,74 @@ input:checked+.slider:before {
     width: 10px;
     height: 10px;
 }
+
+/* =========================================
+   16. LIST PAGE SPECIFIC STYLES
+   ========================================= */
+
+/* --- PRODUCT LIST --- */
+.stock-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stock-alert {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.alert-low {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.alert-out {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* --- MEMBER LIST --- */
+.table-container {
+    overflow-x: auto;
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* --- CATEGORY LIST --- */
+.row-title {
+    font-weight: 500;
+    color: #333;
+    display: block;
+}
+
+.row-subtitle {
+    font-size: 0.85em;
+    color: #888;
+    margin-top: 2px;
+}
+
+/* --- ORDER/STATUS UTILITIES --- */
+.text-status {
+    font-weight: 500;
+}
+
+.status-green { color: #2e7d32; } /* Completed */
+.status-red   { color: #c62828; } /* Cancelled */
+.status-orange{ color: #ef6c00; } /* Pending */
+.status-blue  { color: #1565c0; } /* Shipped/Active/Other */
+.status-gray  { color: #333333; } /* Default */

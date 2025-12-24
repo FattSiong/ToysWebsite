@@ -1,40 +1,36 @@
-// Wait for DOM to load
 document.addEventListener('DOMContentLoaded', function () {
 
-    // --- 1. PRODUCT FORM LOGIC (Media Preview) ---
-    if (document.getElementById('file-upload')) {
+    // ==========================================
+    // 1. PRODUCT FORM (Media Preview)
+    // ==========================================
+    const uploadInput = document.getElementById('file-upload');
+    if (uploadInput) {
         if (typeof enableMediaPreview === 'function') {
             enableMediaPreview('file-upload', 'drop-zone', 'preview-container');
         } else {
-            console.error("Error: enableMediaPreview function not found.");
+            console.error("Warning: enableMediaPreview function (from uploadMedia.js) not found.");
         }
     }
 
-    // --- 2. PRODUCT LIST LOGIC (Status Toggle) ---
+    // ==========================================
+    // 2. PRODUCT LIST (Status Toggle)
+    // ==========================================
     const toggles = document.querySelectorAll('.toggle-status');
-    
-    // Get the current tab from the table attribute we added
-    const tableEl = document.querySelector('.data-table');
-    const currentTab = tableEl ? tableEl.getAttribute('data-current-tab') : 'All';
+    const dataTable = document.querySelector('.data-table');
+    const currentTab = dataTable ? dataTable.getAttribute('data-current-tab') : 'All';
 
     toggles.forEach(toggle => {
         toggle.addEventListener('change', function () {
             const productId = this.getAttribute('data-id');
-            // Get the OLD status before the change
-            const oldStatus = this.getAttribute('data-current-status');
-            
-            // Determine NEW status based on checkbox state
             const newDbStatus = this.checked ? 'Active' : 'Inactive';
             const newUiText = this.checked ? 'Activated' : 'Deactivated';
-            
             const statusLabel = this.closest('td').querySelector('.status-text');
             const row = document.getElementById('row-' + productId);
 
+            // Temporarily disable while processing
             this.disabled = true;
 
-            const updateUrl = 'product_list.php';
-
-            fetch(updateUrl, {
+            fetch('product_list.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: productId, status: newDbStatus })
@@ -43,115 +39,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     this.disabled = false;
                     if (data.success) {
-                        // 1. Update the stored current status for next time
+                        // Update UI attributes
                         this.setAttribute('data-current-status', newDbStatus);
+                        if (statusLabel) statusLabel.textContent = newUiText;
 
-                        // 2. Update Text Label
-                        if (statusLabel) {
-                            statusLabel.textContent = newUiText;
-                        }
-
-                        // 3. Update Badges (Fetch from server)
-                        if (typeof updateBadgesLocal === 'function') {
-                            updateBadgesLocal();
-                        }
-
-                        // 4. Handle Row Visibility (Move to other tab)
+                        // Update global badges and row visibility
+                        if (typeof updateBadgesLocal === 'function') updateBadgesLocal();
                         handleRowVisibility(row, currentTab, newDbStatus);
-
                     } else {
-                        // Revert checkbox if failed
+                        // Revert on failure
                         this.checked = !this.checked;
-                        alert('Failed: ' + (data.message || 'Error'));
+                        alert('Failed to update status: ' + (data.message || 'Unknown error'));
                     }
                 })
                 .catch(error => {
                     this.disabled = false;
                     this.checked = !this.checked;
-                    console.error(error);
+                    console.error('Status update error:', error);
                 });
         });
     });
 
-    // Helper to update badges by fetching fresh counts from the server
-    function updateBadgesLocal() {
-        if (!document.querySelector('.tabs-container')) return;
-
-        fetch('?action=get_counts')
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                if(document.getElementById('badge-all')) document.getElementById('badge-all').textContent = data.total;
-                if(document.getElementById('badge-active')) document.getElementById('badge-active').textContent = data.active_count;
-                if(document.getElementById('badge-inactive')) document.getElementById('badge-inactive').textContent = data.inactive_count;
-                if(document.getElementById('badge-archived')) document.getElementById('badge-archived').textContent = data.archived_count;
-            })
-            .catch(err => console.error('Error updating badges:', err));
-    }
-
-    // Helper to hide row if it no longer belongs in current tab
-    function handleRowVisibility(row, tab, newStatus) {
-        if (!row) return;
-
-        let shouldRemove = false;
-
-        if (tab === 'Active' && newStatus !== 'Active') shouldRemove = true;
-        if (tab === 'Inactive' && newStatus !== 'Inactive') shouldRemove = true;
-        if (tab === 'Archived' && newStatus !== 'Archived') shouldRemove = true;
-        
-        // If tab is 'All', generally we keep it unless it became Archived
-        if (tab === 'All' && newStatus === 'Archived') shouldRemove = true;
-
-        if (shouldRemove) {
-            row.style.transition = 'opacity 0.5s';
-            row.style.opacity = '0';
-            setTimeout(() => {
-                row.remove();
-                checkEmptyTable(); // Check if table is empty after removal
-            }, 500);
-        }
-    }
-
-    // Helper to check if table is empty and show "No products found"
-    // Also handles pagination redirection if page becomes empty
-    function checkEmptyTable() {
-        const tbody = document.querySelector('.data-table tbody');
-        if (tbody && tbody.children.length === 0) {
-            // Check if we are on a page > 1 using URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            const currentPage = parseInt(urlParams.get('page')) || 1;
-
-            if (currentPage > 1) {
-                // Determine previous page
-                const prevPage = currentPage - 1;
-                urlParams.set('page', prevPage);
-                // Reload page to the previous page
-                window.location.search = urlParams.toString();
-            } else {
-                // If we are on page 1, show the "No products found" message
-                const noDataRow = document.createElement('tr');
-                noDataRow.innerHTML = '<td colspan="6" style="text-align:center; padding: 30px; color: #888;">No products found.</td>';
-                tbody.appendChild(noDataRow);
-            }
-        }
-    }
-
-    // --- 3. ARCHIVE PRODUCT LOGIC (Delete Button) ---
+    // ==========================================
+    // 3. ARCHIVE PRODUCT (Delete Button)
+    // ==========================================
     const deleteBtns = document.querySelectorAll('.delete-btn');
 
     deleteBtns.forEach(btn => {
         btn.addEventListener('click', function () {
             const productId = this.getAttribute('data-id');
             const row = document.getElementById('row-' + productId);
-            const tableEl = document.querySelector('.data-table');
-            const currentTab = tableEl ? tableEl.getAttribute('data-current-tab') : 'All';
 
             if (confirm('Are you sure you want to delete this product? It will be moved to the Archived tab.')) {
-                const updateUrl = 'product_list.php';
-
-                fetch(updateUrl, {
+                fetch('product_list.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: productId, status: 'Archived' })
@@ -159,55 +79,114 @@ document.addEventListener('DOMContentLoaded', function () {
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            // Update Badges
-                            updateBadgesLocal();
-                            
-                            // Handle Row Visibility
+                            if (typeof updateBadgesLocal === 'function') updateBadgesLocal();
                             handleRowVisibility(row, currentTab, 'Archived');
-
                         } else {
                             alert('Failed to archive: ' + (data.message || 'Error'));
                         }
                     })
                     .catch(error => {
-                        console.error(error);
-                        alert('An error occurred.');
+                        console.error('Archive error:', error);
+                        alert('An error occurred while archiving.');
                     });
             }
         });
     });
 
-    // --- PRICE FILTER UI ---
+    // ==========================================
+    // 4. PRICE FILTER UI
+    // ==========================================
     const priceBtn = document.getElementById('priceBtn');
     const priceInputs = document.getElementById('priceInputs');
     const closePriceBtn = document.getElementById('closePriceBtn');
     const minInput = document.getElementById('minInput');
     const maxInput = document.getElementById('maxInput');
-    const form = document.getElementById('filterForm');
+    const filterForm = document.getElementById('filterForm');
 
     if (priceBtn) {
-        priceBtn.addEventListener('click', function() {
+        priceBtn.addEventListener('click', () => {
             priceBtn.style.display = 'none';
             priceInputs.style.display = 'flex';
             minInput.focus();
         });
 
-        closePriceBtn.addEventListener('click', function() {
+        closePriceBtn.addEventListener('click', () => {
             minInput.value = '';
             maxInput.value = '';
+
+            // If filters were previously applied, clear them by submitting form
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('min_price') || urlParams.has('max_price')) {
-                form.submit();
+                filterForm.submit();
             } else {
                 priceInputs.style.display = 'none';
                 priceBtn.style.display = 'flex';
             }
         });
     }
+
+    // ==========================================
+    // 5. HELPER FUNCTIONS
+    // ==========================================
+
+    function updateBadgesLocal() {
+        if (!document.querySelector('.tabs-container')) return;
+
+        fetch('?action=get_counts')
+            .then(res => res.ok ? res.json() : Promise.reject('Network error'))
+            .then(data => {
+                if (document.getElementById('badge-all')) document.getElementById('badge-all').textContent = data.total;
+                if (document.getElementById('badge-active')) document.getElementById('badge-active').textContent = data.active_count;
+                if (document.getElementById('badge-inactive')) document.getElementById('badge-inactive').textContent = data.inactive_count;
+                if (document.getElementById('badge-archived')) document.getElementById('badge-archived').textContent = data.archived_count;
+            })
+            .catch(err => console.error('Error updating badges:', err));
+    }
+
+    function handleRowVisibility(row, currentTab, newStatus) {
+        if (!row) return;
+
+        let shouldHide = false;
+
+        // Determine visibility based on logic
+        if (currentTab === 'Active' && newStatus !== 'Active') shouldHide = true;
+        if (currentTab === 'Inactive' && newStatus !== 'Inactive') shouldHide = true;
+        if (currentTab === 'Archived' && newStatus !== 'Archived') shouldHide = true;
+        if (currentTab === 'All' && newStatus === 'Archived') shouldHide = true;
+
+        if (shouldHide) {
+            row.style.transition = 'opacity 0.5s';
+            row.style.opacity = '0';
+            setTimeout(() => {
+                row.remove();
+                checkEmptyTable();
+            }, 500);
+        }
+    }
+
+    function checkEmptyTable() {
+        const tbody = document.querySelector('.data-table tbody');
+        if (tbody && tbody.children.length === 0) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentPage = parseInt(urlParams.get('page')) || 1;
+
+            if (currentPage > 1) {
+                // Go back a page if this page is now empty
+                urlParams.set('page', currentPage - 1);
+                window.location.search = urlParams.toString();
+            } else {
+                // Show "No products" message
+                const noDataRow = document.createElement('tr');
+                noDataRow.innerHTML = '<td colspan="6" style="text-align:center; padding: 30px; color: #888;">No products found.</td>';
+                tbody.appendChild(noDataRow);
+            }
+        }
+    }
 });
 
 /**
  * Handles the "Remove" button click for EXISTING media items.
+ * Exposed globally for onclick attributes.
  */
 function markForDeletion(element, mediaId) {
     if (confirm('Are you sure you want to delete this media? It will be removed when you click "Save Product".')) {

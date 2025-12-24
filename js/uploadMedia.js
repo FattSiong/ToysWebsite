@@ -1,16 +1,25 @@
-/* ../js/uploadMedia.js */
+/**
+ * Initializes the Drag-and-Drop Media Uploader.
+ * This function is called from product.js.
+ * * @param {string} inputId - ID of the file input (e.g., 'file-upload')
+ * @param {string} dropZoneId - ID of the label/div (e.g., 'drop-zone')
+ * @param {string} previewContainerId - ID of the container for thumbnails
+ */
+function enableMediaPreview(inputId, dropZoneId, previewContainerId) {
+    const fileInput = document.getElementById(inputId);
+    const dropZone = document.getElementById(dropZoneId);
+    const previewContainer = document.getElementById(previewContainerId);
 
-document.addEventListener('DOMContentLoaded', function() {
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-upload');
-    const previewContainer = document.getElementById('preview-container');
-    
-    // We use a DataTransfer object to manipulate the files in the input
+    if (!fileInput || !dropZone || !previewContainer) return;
+
+    // Use DataTransfer to manipulate the file list (allows adding/removing files)
     const dataTransfer = new DataTransfer();
 
-    // --- 1. Drag and Drop Events ---
-    
-    // Prevent default browser behaviors for drag events
+    // ==========================================
+    // 1. DRAG & DROP EVENTS
+    // ==========================================
+
+    // Prevent default browser behaviors
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, preventDefaults, false);
     });
@@ -20,72 +29,77 @@ document.addEventListener('DOMContentLoaded', function() {
         e.stopPropagation();
     }
 
-    // Add visual cue when dragging over
+    // Add visual cue
     ['dragenter', 'dragover'].forEach(eventName => {
         dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
     });
 
-    // Remove visual cue when drag leaves or drops
+    // Remove visual cue
     ['dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
     });
 
-    // Handle dropped files
-    dropZone.addEventListener('drop', handleDrop, false);
-
-    // Handle standard click selection
-    fileInput.addEventListener('change', handleFiles, false);
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
+    // Handle Drop
+    dropZone.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
         processFiles(files);
-    }
+    }, false);
 
-    function handleFiles(e) {
-        const files = this.files;
-        processFiles(files);
-    }
+    // Handle Click Selection
+    fileInput.addEventListener('change', function () {
+        processFiles(this.files);
+    }, false);
 
-    // --- 2. File Processing & Preview Generation ---
-
+    // ==========================================
+    // 2. PROCESS & PREVIEW
+    // ==========================================
     function processFiles(files) {
         if (!files || files.length === 0) return;
 
         Array.from(files).forEach(file => {
             // Validate Type
             if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-                alert('Skipped invalid file: ' + file.name);
+                alert('Skipped invalid file type: ' + file.name);
                 return;
             }
 
-            // Add to DataTransfer (preparing for form submission)
+            // Check for duplicates (optional but good UI)
+            let isDuplicate = false;
+            for (let i = 0; i < dataTransfer.files.length; i++) {
+                if (dataTransfer.files[i].name === file.name && dataTransfer.files[i].size === file.size) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            if (isDuplicate) return;
+
+            // Add to DataTransfer
             dataTransfer.items.add(file);
 
             // Generate Preview
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onloadend = function() {
+            reader.onloadend = function () {
                 const isVideo = file.type.startsWith('video/');
                 createPreviewElement(reader.result, isVideo, file.name);
             }
         });
 
-        // Update the actual input element's files property
+        // Update the actual input's files
         fileInput.files = dataTransfer.files;
     }
 
-    // Create HTML matching your product_form.css
     function createPreviewElement(src, isVideo, fileName) {
         const div = document.createElement('div');
         div.classList.add('preview-item');
 
-        // Close/Remove Button
+        // Remove Button
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.classList.add('preview-remove-btn');
         removeBtn.innerHTML = '×';
-        removeBtn.onclick = function() {
+        removeBtn.title = 'Remove upload';
+        removeBtn.onclick = function () {
             removeFileFromList(fileName, div);
         };
 
@@ -94,13 +108,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isVideo) {
             media = document.createElement('video');
             media.src = src;
-            media.controls = false; // Thumbnail usually doesn't need controls immediately
+            media.controls = false; // Thumbnails shouldn't autoplay or have controls
         } else {
             media = document.createElement('img');
             media.src = src;
         }
 
-        // Badges (e.g., VIDEO tag)
+        // Badges
         if (isVideo) {
             const badge = document.createElement('span');
             badge.classList.add('preview-type-badge');
@@ -113,42 +127,50 @@ document.addEventListener('DOMContentLoaded', function() {
         previewContainer.appendChild(div);
     }
 
-    // --- 3. Removing Files from the "New Uploads" List ---
-
+    // ==========================================
+    // 3. REMOVE FROM UPLOAD QUEUE
+    // ==========================================
     function removeFileFromList(fileName, previewElement) {
-        // Create a new DataTransfer to filter out the deleted file
         const newDataTransfer = new DataTransfer();
-        
+
+        // Copy all files except the one being removed
         Array.from(dataTransfer.files).forEach(file => {
             if (file.name !== fileName) {
                 newDataTransfer.items.add(file);
             }
         });
 
-        // Update the main DataTransfer and the Input
+        // Update Global Objects
         dataTransfer.items.clear();
         Array.from(newDataTransfer.files).forEach(file => dataTransfer.items.add(file));
         fileInput.files = dataTransfer.files;
 
-        // Remove the visual preview
+        // Remove Visuals
         previewElement.remove();
     }
-});
+}
 
-// --- 4. Function for Existing Database Media (Server-side deletion) ---
-// This function needs to be global because it's called onclick in the PHP HTML
-window.markForDeletion = function(btn, mediaId) {
-    if (!confirm('Delete this saved media?')) return;
+/**
+ * Handles server-side deletion of EXISTING media.
+ * This must be globally accessible for inline onclick events in PHP.
+ */
+window.markForDeletion = function (btn, mediaId) {
+    if (!confirm('Are you sure you want to delete this saved media? It will be removed when you save.')) return;
 
     const item = btn.closest('.preview-item');
     const deleteInput = document.getElementById('deleted_media_ids');
 
     // Add ID to hidden input
     let currentIds = deleteInput.value ? deleteInput.value.split(',') : [];
-    currentIds.push(mediaId);
-    deleteInput.value = currentIds.join(',');
+    if (!currentIds.includes(String(mediaId))) {
+        currentIds.push(mediaId);
+        deleteInput.value = currentIds.join(',');
+    }
 
-    // Visual removal
+    // Visual removal (hide until saved)
+    item.style.transition = 'opacity 0.3s';
     item.style.opacity = '0';
-    setTimeout(() => item.remove(), 300);
+    setTimeout(() => {
+        item.style.display = 'none';
+    }, 300);
 };

@@ -3,25 +3,28 @@
 session_start();
 require_once '../includes/db.php';
 
-// --- 0. HANDLE BULK ACTIONS ---
+// --- 0. AUTO-UPDATE INACTIVE STATUS FOR ZERO STOCK ---
+try {
+    $pdo->query("UPDATE products SET status = 'Inactive' WHERE stock_quantity = 0 AND status = 'Active'");
+} catch (PDOException $e) {
+    error_log("Auto-inactive update failed: " . $e->getMessage());
+}
+
+// --- 0.1 HANDLE BULK ACTIONS ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'], $_POST['selected_ids'])) {
     $ids = array_map('intval', $_POST['selected_ids']);
     $action = $_POST['bulk_action'];
-    
+
     if (!empty($ids)) {
         $inQuery = implode(',', $ids);
-        
         try {
             if ($action === 'activate') {
-                $pdo->query("UPDATE products SET status = 'Active' WHERE product_id IN ($inQuery)");
+                $pdo->query("UPDATE products SET status = 'Active' WHERE product_id IN ($inQuery) AND stock_quantity > 0");
             } elseif ($action === 'deactivate') {
                 $pdo->query("UPDATE products SET status = 'Inactive' WHERE product_id IN ($inQuery)");
             } elseif ($action === 'delete') {
-                // MODIFIED: Soft delete (Archive) instead of hard delete per user request.
-                // This keeps the record in the database but unlists it (status = 'Archived').
                 $pdo->query("UPDATE products SET status = 'Archived' WHERE product_id IN ($inQuery)");
             }
-            // Redirect to avoid resubmission
             header("Location: product_list.php?status=" . ($_GET['status'] ?? 'All'));
             exit;
         } catch (PDOException $e) {
@@ -30,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'], $_POST
     }
 }
 
-// --- 0.5. HANDLE SINGLE AJAX STATUS UPDATE ---
+// --- 0.2 HANDLE SINGLE AJAX STATUS UPDATE ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $contentType = isset($_SERVER["CONTENT_TYPE"]) ? trim($_SERVER["CONTENT_TYPE"]) : '';
     if (strpos($contentType, 'application/json') !== false) {
@@ -40,12 +43,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = isset($input['status']) ? $input['status'] : null;
         if ($product_id && in_array($status, ['Active', 'Inactive', 'Archived'])) {
             try {
+                if ($status === 'Active') {
+                    $check_stmt = $pdo->prepare("SELECT stock_quantity FROM products WHERE product_id = ?");
+                    $check_stmt->execute([$product_id]);
+                    if ($check_stmt->fetchColumn() == 0) {
+                        echo json_encode(['success' => false, 'message' => 'Cannot activate out-of-stock product']);
+                        exit;
+                    }
+                }
                 $sql = "UPDATE products SET status = :status WHERE product_id = :id";
                 $stmt = $pdo->prepare($sql);
                 $result = $stmt->execute([':status' => $status, ':id' => $product_id]);
                 echo json_encode(['success' => $result]);
-            } catch (PDOException $e) { echo json_encode(['success' => false, 'message' => $e->getMessage()]); }
-        } else { echo json_encode(['success' => false, 'message' => 'Invalid input']); }
+            } catch (PDOException $e) {
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid input']);
+        }
         exit;
     }
 }
@@ -60,7 +75,6 @@ $count_sql = "SELECT
 $count_stmt = $pdo->query($count_sql);
 $counts = $count_stmt->fetch(PDO::FETCH_ASSOC);
 
-// NEW: API Endpoint to return counts as JSON for JS updates
 if (isset($_GET['action']) && $_GET['action'] === 'get_counts') {
     header('Content-Type: application/json');
     echo json_encode($counts);
@@ -71,7 +85,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_counts') {
 try {
     $cat_stmt = $pdo->query("SELECT category_id, name FROM categories ORDER BY name ASC");
     $categories = $cat_stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) { $categories = []; }
+} catch (PDOException $e) {
+    $categories = [];
+}
 
 $current_tab = $_GET['status'] ?? 'All';
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -81,11 +97,13 @@ $max_price = $_GET['max_price'] ?? '';
 $sort_option = $_GET['sort'] ?? '';
 
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = 10; 
+$limit = 10;
 $offset = ($page - 1) * $limit;
 
 $base_sql = " FROM products p LEFT JOIN product_media pm ON p.product_id = pm.product_id AND pm.is_primary = 1";
-if (!empty($category_filter)) { $base_sql .= " INNER JOIN product_categories pc ON p.product_id = pc.product_id"; }
+if (!empty($category_filter)) {
+    $base_sql .= " INNER JOIN product_categories pc ON p.product_id = pc.product_id";
+}
 
 $where_clause = " WHERE 1=1";
 $params = [];
@@ -106,8 +124,14 @@ if (!empty($category_filter)) {
     $where_clause .= " AND pc.category_id = :category_id";
     $params[':category_id'] = $category_filter;
 }
-if ($min_price !== '') { $where_clause .= " AND p.price >= :min_price"; $params[':min_price'] = $min_price; }
-if ($max_price !== '') { $where_clause .= " AND p.price <= :max_price"; $params[':max_price'] = $max_price; }
+if ($min_price !== '') {
+    $where_clause .= " AND p.price >= :min_price";
+    $params[':min_price'] = $min_price;
+}
+if ($max_price !== '') {
+    $where_clause .= " AND p.price <= :max_price";
+    $params[':max_price'] = $max_price;
+}
 
 $count_query = "SELECT COUNT(DISTINCT p.product_id) " . $base_sql . $where_clause;
 $stmt_count = $pdo->prepare($count_query);
@@ -115,8 +139,6 @@ $stmt_count->execute($params);
 $total_records = $stmt_count->fetchColumn();
 $total_pages = ceil($total_records / $limit);
 
-// NEW: Redirect if page > total_pages (and total_pages > 0)
-// This handles cases where items are deleted and the user refreshes or navigates to a now-empty page
 if ($page > $total_pages && $total_pages > 0) {
     $redirectParams = $_GET;
     $redirectParams['page'] = $total_pages;
@@ -126,18 +148,34 @@ if ($page > $total_pages && $total_pages > 0) {
 
 $sql = "SELECT DISTINCT p.*, pm.file_path " . $base_sql . $where_clause;
 switch ($sort_option) {
-    case 'name_asc': $sql .= " ORDER BY p.name ASC"; break;
-    case 'name_desc': $sql .= " ORDER BY p.name DESC"; break;
-    case 'price_asc': $sql .= " ORDER BY p.price ASC"; break;
-    case 'price_desc': $sql .= " ORDER BY p.price DESC"; break;
-    case 'quantity_asc': $sql .= " ORDER BY p.stock_quantity ASC"; break;
-    case 'quantity_desc': $sql .= " ORDER BY p.stock_quantity DESC"; break;
-    default: $sql .= " ORDER BY p.product_id DESC"; break;
+    case 'name_asc':
+        $sql .= " ORDER BY p.name ASC";
+        break;
+    case 'name_desc':
+        $sql .= " ORDER BY p.name DESC";
+        break;
+    case 'price_asc':
+        $sql .= " ORDER BY p.price ASC";
+        break;
+    case 'price_desc':
+        $sql .= " ORDER BY p.price DESC";
+        break;
+    case 'quantity_asc':
+        $sql .= " ORDER BY p.stock_quantity ASC";
+        break;
+    case 'quantity_desc':
+        $sql .= " ORDER BY p.stock_quantity DESC";
+        break;
+    default:
+        $sql .= " ORDER BY p.product_id DESC";
+        break;
 }
 $sql .= " LIMIT :limit OFFSET :offset";
 
 $stmt = $pdo->prepare($sql);
-foreach ($params as $key => $value) { $stmt->bindValue($key, $value); }
+foreach ($params as $key => $value) {
+    $stmt->bindValue($key, $value);
+}
 $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
@@ -161,10 +199,20 @@ include '../includes/header.php';
 <div class="filter-bar">
     <form action="" method="GET" class="filter-form" id="filterForm">
         <?php if ($current_tab !== 'All'): ?><input type="hidden" name="status" value="<?= htmlspecialchars($current_tab) ?>"><?php endif; ?>
+
         <div class="filter-group search-group">
-            <button type="button" class="search-submit-btn" onclick="this.form.submit()"><i class="icon fa-search"></i></button>
+            <button type="submit" class="search-submit-btn">
+                <i class="icon fa-search"></i>
+            </button>
             <input type="text" name="search" class="form-input search-input-field" placeholder="Search Product" value="<?= htmlspecialchars($search_query) ?>">
+
+            <?php if (!empty($search_query)): ?>
+                <a href="?status=<?= htmlspecialchars($current_tab) ?>" class="clear-search-btn" title="Clear Search">
+                    <i class="icon fa-close"></i>
+                </a>
+            <?php endif; ?>
         </div>
+
         <div class="filter-group">
             <select name="category" class="form-select" onchange="this.form.submit()">
                 <option value="">Category</option>
@@ -174,6 +222,7 @@ include '../includes/header.php';
             </select>
             <i class="icon fa-filter icon-right"></i>
         </div>
+
         <div class="filter-group price-toggle-group">
             <?php $has_price = ($min_price !== '' || $max_price !== ''); ?>
             <button type="button" class="price-trigger-btn" id="priceBtn" style="display: <?= $has_price ? 'none' : 'flex' ?>;"><span>Price Range</span><i class="icon fa-filter icon-right" style="font-size: 10px; margin-left: auto;"></i></button>
@@ -198,30 +247,55 @@ include '../includes/header.php';
     </form>
 </div>
 
-<!-- BULK ACTION WRAPPER FORM -->
 <form method="POST" action="" id="bulkForm">
     <input type="hidden" name="bulk_action" id="bulk-action-input" value="">
-    
+
     <table class="data-table" data-current-tab="<?= htmlspecialchars($current_tab) ?>">
         <thead>
             <?php
-            function getSortParams($colName, $currentSort) {
-                $params = $_GET; 
-                $icon = 'fa-sort'; $activeClass = '';
+            function getSortParams($colName, $currentSort)
+            {
+                $params = $_GET;
+                $icon = 'fa-sort';
+                $activeClass = '';
                 if ($colName === 'name') {
-                    if ($currentSort === 'name_asc') { $params['sort'] = 'name_desc'; $icon = 'fa-sort-desc'; $activeClass = 'active'; }
-                    elseif ($currentSort === 'name_desc') { $params['sort'] = 'name_asc'; $icon = 'fa-sort-asc'; $activeClass = 'active'; }
-                    else { $params['sort'] = 'name_asc'; }
+                    if ($currentSort === 'name_asc') {
+                        $params['sort'] = 'name_desc';
+                        $icon = 'fa-sort-desc';
+                        $activeClass = 'active';
+                    } elseif ($currentSort === 'name_desc') {
+                        $params['sort'] = 'name_asc';
+                        $icon = 'fa-sort-asc';
+                        $activeClass = 'active';
+                    } else {
+                        $params['sort'] = 'name_asc';
+                    }
                 }
                 if ($colName === 'price') {
-                    if ($currentSort === 'price_asc') { $params['sort'] = 'price_desc'; $icon = 'fa-sort-asc'; $activeClass = 'active'; }
-                    elseif ($currentSort === 'price_desc') { $params['sort'] = 'price_asc'; $icon = 'fa-sort-desc'; $activeClass = 'active'; }
-                    else { $params['sort'] = 'price_asc'; }
+                    if ($currentSort === 'price_asc') {
+                        $params['sort'] = 'price_desc';
+                        $icon = 'fa-sort-asc';
+                        $activeClass = 'active';
+                    } elseif ($currentSort === 'price_desc') {
+                        $params['sort'] = 'price_asc';
+                        $icon = 'fa-sort-desc';
+                        $activeClass = 'active';
+                    } else {
+                        $params['sort'] = 'price_asc';
+                    }
                 }
                 if ($colName === 'quantity') {
-                    if ($currentSort === 'quantity_asc') { $params['sort'] = 'quantity_desc'; $icon = 'fa-sort-asc'; $activeClass = 'active'; }
-                    elseif ($currentSort === 'quantity_desc') { $params['sort'] = 'quantity_asc'; $icon = 'fa-sort-desc'; $activeClass = 'active'; }
-                    else { $params['sort'] = 'quantity_asc'; }
+                    if ($currentSort === 'quantity_asc') {
+                        $params['sort'] = 'quantity_desc';
+                        $icon = 'fa-sort-asc';
+                        $activeClass = 'active';
+                    } elseif ($currentSort === 'quantity_desc') {
+                        $params['sort'] = 'quantity_asc';
+                        $icon = 'fa-sort-desc';
+                        $activeClass = 'active';
+                    } else {
+                        $params['sort'] = 'quantity_asc';
+                    }
                 }
                 return ['url' => '?' . http_build_query($params), 'icon' => $icon, 'class' => $activeClass];
             }
@@ -230,7 +304,6 @@ include '../includes/header.php';
             $sortQty  = getSortParams('quantity', $sort_option);
             ?>
 
-            <!-- DEFAULT HEADER (Visible when nothing is selected) -->
             <tr id="default-header">
                 <th style="width: 40px;"><input type="checkbox" id="selectAllDefault"></th>
                 <th><a href="<?= $sortName['url'] ?>" class="sortable-link <?= $sortName['class'] ?>">Product <i class="icon fa <?= $sortName['icon'] ?>"></i></a></th>
@@ -240,7 +313,6 @@ include '../includes/header.php';
                 <th>Action</th>
             </tr>
 
-            <!-- BULK HEADER (Visible when items selected) -->
             <tr id="bulk-header" class="bulk-header">
                 <th style="width: 40px;">
                     <input type="checkbox" id="selectAllBulk">
@@ -250,17 +322,12 @@ include '../includes/header.php';
                 </th>
                 <th colspan="4">
                     <div class="bulk-buttons" style="justify-content: flex-end;">
-                        <!-- Activate Button: Show on Inactive, Archived, All -->
                         <?php if ($current_tab === 'Inactive' || $current_tab === 'Archived' || $current_tab === 'All'): ?>
                             <button type="button" class="btn-bulk" data-action="activate">Activate</button>
                         <?php endif; ?>
-
-                        <!-- Deactivate Button: Show on Active, All -->
                         <?php if ($current_tab === 'Active' || $current_tab === 'All'): ?>
                             <button type="button" class="btn-bulk" data-action="deactivate">Deactivate</button>
                         <?php endif; ?>
-
-                        <!-- Delete Button: Show on Active, Inactive, All (Not Archived) -->
                         <?php if ($current_tab !== 'Archived'): ?>
                             <button type="button" class="btn-bulk btn-bulk-delete" data-action="delete" data-confirm="Are you sure you want to delete these products? They will be archived.">Delete</button>
                         <?php endif; ?>
@@ -284,12 +351,25 @@ include '../includes/header.php';
                             </div>
                         </td>
                         <td>$<?= number_format($row['price'], 2) ?></td>
-                        <td><?= $row['stock_quantity'] ?> in stock</td>
+                        <td>
+                            <div class="stock-wrapper">
+                                <span><?= $row['stock_quantity'] ?> in stock</span>
+                                <?php if ($row['stock_quantity'] == 0): ?>
+                                    <span class="stock-alert alert-out">Out of Stock</span>
+                                <?php elseif ($row['stock_quantity'] < 100): ?>
+                                    <span class="stock-alert alert-low">Low Stock</span>
+                                <?php endif; ?>
+                            </div>
+                        </td>
                         <td>
                             <div class="status-wrapper">
                                 <label class="status-toggle">
-                                    <input type="checkbox" class="toggle-status" data-id="<?= $row['product_id'] ?>" data-current-status="<?= $row['status'] ?>" <?= $row['status'] == 'Active' ? 'checked' : '' ?>>
-                                    <span class="slider"></span>
+                                    <input type="checkbox" class="toggle-status"
+                                        data-id="<?= $row['product_id'] ?>"
+                                        data-current-status="<?= $row['status'] ?>"
+                                        <?= $row['status'] == 'Active' ? 'checked' : '' ?>
+                                        <?= $row['stock_quantity'] == 0 ? 'disabled' : '' ?>>
+                                    <span class="slider" <?= $row['stock_quantity'] == 0 ? 'style="cursor: not-allowed; opacity: 0.5;" title="Cannot activate out-of-stock product"' : '' ?>></span>
                                 </label>
                                 <span class="status-text"><?= $row['status'] == 'Active' ? 'Activated' : 'Deactivated' ?></span>
                             </div>
@@ -305,7 +385,9 @@ include '../includes/header.php';
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
-                <tr><td colspan="6" style="text-align:center; padding: 30px; color: #888;">No products found.</td></tr>
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 30px; color: #888;">No products found.</td>
+                </tr>
             <?php endif; ?>
         </tbody>
     </table>
@@ -316,15 +398,20 @@ include '../includes/header.php';
         <div class="pagination-info">Showing <?= $offset + 1 ?> to <?= min($offset + $limit, $total_records) ?> of <?= $total_records ?> products</div>
         <div class="pagination-links">
             <?php
-            function getPageUrl($pageNum) { $params = $_GET; $params['page'] = $pageNum; return '?' . http_build_query($params); }
-            $adjacents = 1; 
+            function getPageUrl($pageNum)
+            {
+                $params = $_GET;
+                $params['page'] = $pageNum;
+                return '?' . http_build_query($params);
+            }
+            $adjacents = 1;
             $start_loop = max(1, $page - $adjacents);
             $end_loop   = min($total_pages, $page + $adjacents);
             ?>
             <?php if ($page > 1): ?>
                 <a href="<?= getPageUrl($page - 1) ?>" class="page-link"><i class="icon fa-chevron-left"></i></a>
             <?php else: ?><span class="page-link disabled"><i class="icon fa-chevron-left"></i></span><?php endif; ?>
-            
+
             <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                 <?php if ($i == 1 || $i == $total_pages || ($i >= $start_loop && $i <= $end_loop)): ?>
                     <?php if ($i == $page): ?><span class="page-link active"><?= $i ?></span>
@@ -333,7 +420,7 @@ include '../includes/header.php';
                     <?php if ($i == $start_loop - 1 || $i == $end_loop + 1): ?><span class="page-link disabled">...</span><?php endif; ?>
                 <?php endif; ?>
             <?php endfor; ?>
-            
+
             <?php if ($page < $total_pages): ?>
                 <a href="<?= getPageUrl($page + 1) ?>" class="page-link"><i class="icon fa-chevron-right"></i></a>
             <?php else: ?><span class="page-link disabled"><i class="icon fa-chevron-right"></i></span><?php endif; ?>

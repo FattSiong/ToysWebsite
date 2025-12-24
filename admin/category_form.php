@@ -2,25 +2,29 @@
 session_start();
 require_once '../includes/db.php';
 
-// Initialize variables
-$category_id = null;
-$name = '';
+// ==========================================
+// 1. INITIALIZATION
+// ==========================================
+$category_id          = null;
+$name                 = '';
 $assigned_product_ids = [];
-$is_edit = false;
-$page_title = 'Add Category';
-$errors = [];
+$is_edit              = false;
+$page_title           = 'Add Category';
+$errors               = [];
+$categories           = [];
+$all_products         = [];
 
-// 1. Fetch Categories for the Dropdown
+// Fetch Categories (for the modal filter dropdown)
 try {
     $cat_stmt = $pdo->query("SELECT category_id, name FROM categories ORDER BY name ASC");
     $categories = $cat_stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    $categories = [];
+    error_log("Error fetching categories: " . $e->getMessage());
 }
 
-// 2. Fetch ALL Products with details AND their Categories
+// Fetch ALL Products (for selection)
+// We use GROUP_CONCAT to get a comma-separated list of category IDs for the filter logic
 try {
-    // We use GROUP_CONCAT to get a comma-separated list of category IDs for each product
     $sql = "SELECT p.*, pm.file_path, GROUP_CONCAT(pc.category_id) as category_ids
             FROM products p 
             LEFT JOIN product_media pm ON p.product_id = pm.product_id AND pm.is_primary = 1
@@ -30,12 +34,14 @@ try {
     $prod_stmt = $pdo->query($sql);
     $all_products = $prod_stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    $all_products = [];
+    error_log("Error fetching products: " . $e->getMessage());
 }
 
-// Check if we are in Edit Mode
+// ==========================================
+// 2. CHECK EDIT MODE
+// ==========================================
 if (isset($_GET['id'])) {
-    $category_id = $_GET['id'];
+    $category_id = (int)$_GET['id'];
     $is_edit = true;
     $page_title = 'Edit Category';
 
@@ -45,17 +51,23 @@ if (isset($_GET['id'])) {
 
     if ($category) {
         $name = $category['name'];
+        // Fetch currently assigned products
         $assigned_stmt = $pdo->prepare("SELECT product_id FROM product_categories WHERE category_id = ?");
         $assigned_stmt->execute([$category_id]);
         $assigned_product_ids = $assigned_stmt->fetchAll(PDO::FETCH_COLUMN);
+    } else {
+        $errors[] = "Category not found.";
     }
 }
 
-// Handle Form Submission
+// ==========================================
+// 3. HANDLE FORM SUBMISSION
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $selected_products = isset($_POST['product_ids']) ? $_POST['product_ids'] : [];
 
+    // Validation
     if (empty($name)) {
         $errors[] = "Category Name is required.";
     }
@@ -73,12 +85,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $category_id = $pdo->lastInsertId();
             }
 
+            // --- Update Product Links ---
+            // 1. Remove old links
             $pdo->prepare("DELETE FROM product_categories WHERE category_id = ?")->execute([$category_id]);
 
+            // 2. Add new links
             if (!empty($selected_products)) {
                 $insert_stmt = $pdo->prepare("INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)");
                 foreach ($selected_products as $prod_id) {
-                    $insert_stmt->execute([$prod_id, $category_id]);
+                    $insert_stmt->execute([(int)$prod_id, $category_id]);
                 }
             }
 
@@ -99,13 +114,13 @@ include '../includes/header.php';
 
 <div class="form-page-header">
     <a href="category_list.php" class="back-link"><i class="icon fa-arrow-left"></i> Back</a>
-    <h1 class="page-title"><?= $page_title ?></h1>
+    <h1 class="page-title"><?= htmlspecialchars($page_title) ?></h1>
 </div>
 
 <?php if (!empty($errors)): ?>
-    <div class="error-box">
+    <div class="error-banner">
         <?php foreach ($errors as $error): ?>
-            <p class="error-text"><?= htmlspecialchars($error) ?></p>
+            <p><?= htmlspecialchars($error) ?></p>
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
@@ -118,7 +133,8 @@ include '../includes/header.php';
         <div class="card-body">
             <div class="form-group">
                 <label for="name">Name</label>
-                <input type="text" id="name" name="name" class="form-input" value="<?= htmlspecialchars($name) ?>" required>
+                <input type="text" id="name" name="name" class="form-input"
+                    value="<?= htmlspecialchars($name) ?>" placeholder="e.g., Action Figures" required>
             </div>
         </div>
     </div>

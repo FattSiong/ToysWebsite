@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
+    // ==========================================
+    // 1. ELEMENT SELECTION
+    // ==========================================
     const modal = document.getElementById('productModal');
     const modalTbody = document.getElementById('modal-tbody');
     const selectedTbody = document.getElementById('selected-tbody');
@@ -19,25 +21,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Buttons
     const headerAddBtn = document.getElementById('headerAddBtn');
     const emptyAddBtn = document.getElementById('emptyAddBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const addSelectedBtn = document.getElementById('addSelectedBtn');
+    const selectAllModal = document.getElementById('selectAllModal');
 
-    // Initial Render
+    // ==========================================
+    // 2. INITIALIZATION & LISTENERS
+    // ==========================================
     renderMainTable();
 
-    // --- Event Listeners ---
+    // Open/Close Modal
     headerAddBtn.addEventListener('click', openModal);
     emptyAddBtn.addEventListener('click', openModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelModalBtn.addEventListener('click', closeModal);
 
-    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-    document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-    document.getElementById('addSelectedBtn').addEventListener('click', saveModalSelection);
+    // Actions
+    addSelectedBtn.addEventListener('click', saveModalSelection);
 
-    // Filter Listeners
+    // Filters
     modalSearch.addEventListener('input', filterModalList);
     modalCategory.addEventListener('change', filterModalList);
     modalMinPrice.addEventListener('input', filterModalList);
     modalMaxPrice.addEventListener('input', filterModalList);
 
-    // Price Toggle Logic
+    // Price Toggle UI
     modalPriceBtn.addEventListener('click', () => {
         modalPriceBtn.style.display = 'none';
         modalPriceInputs.style.display = 'flex';
@@ -45,33 +54,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     modalClosePriceBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // prevent weird bubbling
+        e.stopPropagation();
         modalMinPrice.value = '';
         modalMaxPrice.value = '';
         modalPriceInputs.style.display = 'none';
         modalPriceBtn.style.display = 'flex';
-        filterModalList(); // Reset price filter
+        filterModalList(); // Reset price filter immediately
     });
 
-    // Select All Logic
-    document.getElementById('selectAllModal').addEventListener('change', function () {
+    // Select All
+    selectAllModal.addEventListener('change', function () {
         const checkboxes = modalTbody.querySelectorAll('.modal-chk');
         checkboxes.forEach(chk => {
+            // Only select visible rows (respecting filters)
             if (chk.closest('tr').style.display !== 'none') {
                 chk.checked = this.checked;
             }
         });
     });
 
-    // ----------------------
-    // MAIN PAGE FUNCTIONS
-    // ----------------------
+    // ==========================================
+    // 3. MAIN PAGE FUNCTIONS
+    // ==========================================
     function renderMainTable() {
         selectedTbody.innerHTML = '';
         hiddenContainer.innerHTML = '';
 
         if (!currentSelection || currentSelection.length === 0) {
-            emptyState.style.display = 'flex'; // Changed to flex to center content
+            emptyState.style.display = 'flex';
             selectedTable.style.display = 'none';
             headerAddBtn.style.display = 'none';
             return;
@@ -79,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         emptyState.style.display = 'none';
         selectedTable.style.display = 'table';
-        headerAddBtn.style.display = 'flex';
+        headerAddBtn.style.display = 'flex'; // Show "Add +" in header
 
         currentSelection.forEach((id, index) => {
             const product = allProducts.find(p => String(p.product_id) === String(id));
@@ -87,32 +97,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let imgSrc = 'https://placehold.co/40?text=No+Img';
             if (product.file_path) {
-                // Handle relative paths if needed, mimicking PHP logic
+                // Ensure path is correct for admin folder
                 imgSrc = product.file_path.startsWith('../') ? product.file_path : '../' + product.file_path;
             }
 
-            let statusText;
-            if (product.status === 'Active') {
-                statusText = 'Activated';
-            } else if (product.status === 'Archived') {
-                statusText = 'Archived';
-            } else {
-                statusText = 'Deactivated';
-            }
+            let statusText = product.status === 'Active' ? 'Activated' :
+                product.status === 'Archived' ? 'Archived' : 'Deactivated';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td>
                     <div class="product-cell">
-                        <img src="${imgSrc}" class="product-thumb">
+                        <img src="${imgSrc}" class="product-thumb" alt="Img">
                         <span>${product.name}</span>
                     </div>
                 </td>
                 <td>$${parseFloat(product.price).toFixed(2)}</td>
                 <td>${statusText}</td>
                 <td>
-                    <!-- UPDATED: Use same classes as admin list -->
                     <button type="button" class="action-btn delete-btn" data-id="${id}" title="Remove">
                         <i class="icon fa-trash"></i>
                     </button>
@@ -120,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             selectedTbody.appendChild(tr);
 
+            // Add hidden input for form submission
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'product_ids[]';
@@ -127,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hiddenContainer.appendChild(input);
         });
 
-        // Add listeners to new delete buttons
+        // Re-attach delete listeners
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 removeProduct(this.getAttribute('data-id'));
@@ -140,13 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderMainTable();
     }
 
-    // ----------------------
-    // MODAL FUNCTIONS
-    // ----------------------
+    // ==========================================
+    // 4. MODAL FUNCTIONS
+    // ==========================================
     function openModal() {
         modal.classList.add('open');
         renderModalList();
-        // Reset Filters
+
+        // Reset Inputs
         modalSearch.value = '';
         modalCategory.value = '';
         modalMinPrice.value = '';
@@ -154,7 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalPriceInputs.style.display = 'none';
         modalPriceBtn.style.display = 'flex';
 
-        modalSearch.focus();
+        // Focus search
+        setTimeout(() => modalSearch.focus(), 100);
     }
 
     function closeModal() {
@@ -175,17 +181,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = document.createElement('tr');
             tr.className = 'modal-row';
 
-            // Store data attributes for filtering
+            // Data attributes for efficient filtering
             tr.dataset.name = product.name.toLowerCase();
             tr.dataset.price = parseFloat(product.price);
-            tr.dataset.cats = product.category_ids ? product.category_ids.split(',') : [];
+            // Handle potentially null category_ids
+            tr.dataset.cats = product.category_ids ? product.category_ids : '';
 
             tr.innerHTML = `
                 <td><input type="checkbox" class="modal-chk" value="${product.product_id}" ${isChecked ? 'checked' : ''}></td>
                 <td>${index + 1}</td>
                 <td>
                     <div class="product-cell">
-                        <img src="${imgSrc}" class="product-thumb">
+                        <img src="${imgSrc}" class="product-thumb" alt="Img">
                         <span>${product.name}</span>
                     </div>
                 </td>
@@ -196,10 +203,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- FILTER LOGIC ---
     function filterModalList() {
         const searchTerm = modalSearch.value.toLowerCase();
-        const categoryId = modalCategory.value;
+        const categoryId = modalCategory.value; // String
         const minPrice = parseFloat(modalMinPrice.value) || 0;
         const maxPrice = parseFloat(modalMaxPrice.value) || Infinity;
 
@@ -208,26 +214,19 @@ document.addEventListener('DOMContentLoaded', () => {
         rows.forEach(row => {
             const name = row.dataset.name;
             const price = parseFloat(row.dataset.price);
-            // category_ids is a comma-separated string in the dataset, handled as array
-            const productCats = row.dataset.cats.split(',');
+            const productCats = row.dataset.cats.split(','); // Array of strings
 
             let isMatch = true;
 
-            // 1. Search
-            if (searchTerm && !name.includes(searchTerm)) {
-                isMatch = false;
-            }
+            // 1. Search Name
+            if (searchTerm && !name.includes(searchTerm)) isMatch = false;
 
-            // 2. Category
-            // Note: productCats array might contain strings, categoryId is string.
-            if (categoryId && !productCats.includes(categoryId)) {
-                isMatch = false;
-            }
+            // 2. Category Filter
+            // We check if the selected categoryId exists in the product's category list
+            if (isMatch && categoryId && !productCats.includes(categoryId)) isMatch = false;
 
-            // 3. Price
-            if (price < minPrice || price > maxPrice) {
-                isMatch = false;
-            }
+            // 3. Price Filter
+            if (isMatch && (price < minPrice || price > maxPrice)) isMatch = false;
 
             row.style.display = isMatch ? '' : 'none';
         });
