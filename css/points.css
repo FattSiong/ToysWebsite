@@ -1,0 +1,81 @@
+/* ToysWebsite/css/points.css */
+
+.points-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.points-card {
+    background: #fff;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.points-header {
+    background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%);
+    color: #fff;
+    padding: 30px;
+    text-align: center;
+}
+
+.points-value {
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.points-label {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Transaction Table */
+.history-section {
+    padding: 20px;
+}
+
+.trans-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.trans-table th {
+    text-align: left;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #eee;
+    color: #666;
+}
+
+.trans-table td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+}
+
+.trans-table tr:last-child td {
+    border-bottom: none;
+}
+
+.amount-plus {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.amount-minus {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.date-col {
+    color: #888;
+    font-size: 0.9em;
+    width: 200px;
+}

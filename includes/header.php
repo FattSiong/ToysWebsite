@@ -116,6 +116,11 @@ if ($is_logged_in && isset($pdo)) { // Assuming $pdo is available from base.php
 
                 <?php if ($role !== 'admin'): ?>
                     <li>
+                        <a href="<?= $base_path ?>member/points.php" class="<?= $current_page == 'points.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-coins"></i> My Points
+                        </a>
+                    </li>
+                    <li>
                         <a href="<?= $base_path ?>member/orders.php" class="<?= $current_page == 'orders.php' ? 'active' : '' ?>">
                             <i class="icon fas fa-box-open"></i> My Orders
                         </a>
