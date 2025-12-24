@@ -72,7 +72,7 @@ if (is_post()) {
                         $update->execute([$user['user_id']]);
                     }
 
-                    if ($user['role'] === 'admin') {
+                    if (in_array($user['role'], ['admin', 'manager'])) {
                         redirect('admin/dashboard.php');
                     } else {
                         redirect('index.php');
