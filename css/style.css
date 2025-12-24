@@ -7,7 +7,8 @@
 }
 
 body {
-    background-color: #f4f4f4;
+    background-color: #f8f9fa; /* Light grey background */
+    color: #333;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -15,38 +16,49 @@ body {
 
 /* 2. Navigation Bar */
 header {
-    background-color: #333;
-    color: white;
-    padding: 15px 20px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 15px 0;
+    color: #333;
+    position: sticky; /* Keeps header at top */
+    top: 0;
+    z-index: 1000;
+}
+
+.header-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 20px;
 }
 
-header .logo {
+.logo {
     font-size: 24px;
     font-weight: bold;
-    color: #fff;
+    color: #007bff; /* Blue Logo */
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.nav-links {
+nav ul {
     list-style: none;
     display: flex;
     gap: 20px;
-    margin: 0;
-    padding: 0;
 }
 
-.nav-links a {
-    color: #555;
+nav a {
+    color: #ddd;
     text-decoration: none;
     font-size: 16px;
-    transition: color 0.3s;
 }
 
-.nav-links a:hover {
-    color: #007bff;
+nav a:hover {
+    color: #fff;
 }
 
 /* 3. Main Content Container */
@@ -61,7 +73,14 @@ main {
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-
+/* 4. Footer */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    margin-top: auto;
+}
 
 /* 5. Utility Classes (Like Bootstrap) */
 .btn {
@@ -229,12 +248,10 @@ header {
     z-index: 1000;
 }
 
-/* CHANGE THIS CLASS TO USE 100% WIDTH */
 .header-container {
-    width: 100%;           /* Was 90% */
-    max-width: none;       /* Remove the 1200px limit */
-    margin: 0;             /* Remove auto margin */
-    padding: 0 25px;       /* Add padding so it doesn't touch the screen edge */
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -319,7 +336,6 @@ header {
 .dropdown-content a {
     color: #333;
     padding: 10px 20px;
-    text-decoration: none;
     display: block;
 }
 
@@ -339,7 +355,7 @@ header {
     font-size: 20px;
 }
 
-.badge {
+.cart-notification {
     position: absolute;
     top: -8px;
     right: -10px;
@@ -351,33 +367,136 @@ header {
     border-radius: 50%;
 }
 
+/* 3. Main Content Container */
+main {
+    flex: 1;
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
 
-/* Alert Boxes */
-.alert {
-    padding: 15px;
-    margin-bottom: 20px;
+/* 4. Footer */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    margin-top: auto;
+}
+
+/* 5. Utility Classes */
+.btn {
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
     border-radius: 4px;
-    text-align: center;
+    text-decoration: none;
+    display: inline-block;
 }
-.alert-danger {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-.alert-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+.btn-primary { background-color: #007bff; color: white; }
+.btn-danger { background-color: #dc3545; color: white; }
+
+.form-group { margin-bottom: 15px; }
+input[type="text"], input[type="password"], select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
-.btn-block {
-    width: 100%; /* Make button full width */
-    padding: 12px;
-    font-size: 16px;
+/* Product Grid */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
 }
 
-.auth-footer {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 14px;
+.product-card {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.product-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-bottom: 1px solid #eee;
+}
+
+.card-body { padding: 15px; text-align: center; }
+.product-card h3 { font-size: 18px; margin-bottom: 10px; color: #333; }
+.product-card .price { font-size: 1.2rem; color: #28a745; font-weight: bold; margin-bottom: 15px; }
+
+/* Star Ratings */
+.checked {
+    color: #ffc107; /* Bootstrap Warning Yellow */
+}
+.review-card {
+    border-left: 4px solid #007bff;
+    background-color: #f8f9fa;
+}
+
+/* --- ORDER TRACKING PROGRESS BAR --- */
+.track {
+    position: relative;
+    background-color: #ddd;
+    height: 7px;
+    display: flex;
+    margin-bottom: 60px;
+    margin-top: 50px;
+}
+.track .step {
+    flex-grow: 1;
+    width: 25%;
+    margin-top: -18px;
+    text-align: center;
+    position: relative;
+}
+.track .step.active:before {
+    background: #28a745; /* Green */
+}
+.track .step::before {
+    height: 7px;
+    position: absolute;
+    content: "";
+    width: 100%;
+    left: 0;
+    top: 18px;
+}
+.track .icon {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    position: relative;
+    border-radius: 100%;
+    background: #ddd;
+    color: #fff;
+    z-index: 2;
+}
+.track .step.active .icon {
+    background: #28a745;
+}
+.track .text {
+    display: block;
+    margin-top: 7px;
+    font-weight: 600;
+    color: #999;
+}
+.track .step.active .text {
+    color: #000;
+}
+

@@ -15,6 +15,22 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 // 2. Identify Page Type
 $is_admin_page = ($role === 'admin' && strpos($_SERVER['PHP_SELF'], '/admin/') !== false);
+
+// Default to placeholder
+$profile_pic = $base_path . 'images/no-image.jpg'; 
+
+// If logged in and has photo, use it
+if ($is_logged_in && !empty($_SESSION['user']['profile_photo'])) {
+    $profile_pic = $base_path . 'images/profiles/' . $_SESSION['user']['profile_photo'];
+}
+
+// Optional: Logic to get actual cart count
+$cart_count = 0;
+if ($is_logged_in && isset($pdo)) { // Assuming $pdo is available from base.php
+    $stmtC = $pdo->prepare("SELECT SUM(quantity) FROM cart_items ci JOIN cart c ON ci.cart_id = c.cart_id WHERE c.user_id = ?");
+    $stmtC->execute([$_SESSION['user_id']]);
+    $cart_count = $stmtC->fetchColumn() ?: 0;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,6 +42,7 @@ $is_admin_page = ($role === 'admin' && strpos($_SERVER['PHP_SELF'], '/admin/') !
 
     <link rel="stylesheet" href="<?= $base_path ?>css/public.css">
     <link rel="stylesheet" href="<?= $base_path ?>css/main_sidebar.css">
+    
 
     <?php if ($is_admin_page): ?>
         <link rel="stylesheet" href="<?= $base_path ?>css/admin.css">
@@ -99,8 +116,14 @@ $is_admin_page = ($role === 'admin' && strpos($_SERVER['PHP_SELF'], '/admin/') !
 
                 <?php if ($role !== 'admin'): ?>
                     <li>
-                        <a href="<?= $base_path ?>cart.php" class="<?= $current_page == 'cart.php' ? 'active' : '' ?>">
-                            <i class="icon fas fa-shopping-cart"></i> My Cart
+                        <a href="<?= $base_path ?>member/orders.php" class="<?= $current_page == 'orders.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-box-open"></i> My Orders
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="<?= $base_path ?>member/wishlist.php" class="<?= $current_page == 'wishlist.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-heart"></i> My Wishlist
                         </a>
                     </li>
                 <?php endif; ?>
@@ -150,10 +173,12 @@ $is_admin_page = ($role === 'admin' && strpos($_SERVER['PHP_SELF'], '/admin/') !
             <nav>
                 <ul class="nav-links">
                     <?php if ($is_logged_in && $role !== 'admin'): ?>
-                        <li><a href="<?= $base_path ?>cart.php" class="cart-icon">
+                        <li>
+                            <a href="<?= $base_path ?>member/cart.php" class="cart-icon">
                                 <i class="icon fas fa-shopping-cart"></i>
-                                <span class="badge">0</span>
-                            </a></li>
+                                <span class="badge"><?php echo $cart_count; ?></span>
+                            </a>
+                        </li>
                     <?php endif; ?>
 
                     <?php if ($is_logged_in): ?>
