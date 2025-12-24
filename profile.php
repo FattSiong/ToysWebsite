@@ -199,7 +199,6 @@ if ($user['role'] !== 'admin') {
         }
     }
 
-    // 3. Handle Delete
     if (is_post() && post('action') == 'delete_address') {
         $addr_id = req('address_id');
         $stm = $_db->prepare("DELETE FROM shipping_addresses WHERE shipping_address_id = ? AND user_id = ?");
@@ -208,8 +207,22 @@ if ($user['role'] !== 'admin') {
         redirect('profile.php');
     }
 
-    // 4. Fetch Addresses
-    $stm = $_db->prepare("SELECT * FROM shipping_addresses WHERE user_id = ? ORDER BY shipping_address_id DESC");
+    if (is_post() && post('action') == 'set_default') {
+        $addr_id = req('address_id');
+
+        // 1. Reset all addresses for this user to 0
+        $stm = $_db->prepare("UPDATE shipping_addresses SET is_default = 0 WHERE user_id = ?");
+        $stm->execute([$user['user_id']]);
+
+        // 2. Set the selected address to 1
+        $stm = $_db->prepare("UPDATE shipping_addresses SET is_default = 1 WHERE shipping_address_id = ? AND user_id = ?");
+        $stm->execute([$addr_id, $user['user_id']]);
+
+        temp('info', 'Default address updated successfully!');
+        redirect('profile.php');
+    }
+
+    $stm = $_db->prepare("SELECT * FROM shipping_addresses WHERE user_id = ? ORDER BY is_default DESC, shipping_address_id DESC");
     $stm->execute([$user['user_id']]);
     $addresses = $stm->fetchAll();
 }
@@ -396,6 +409,17 @@ if ($user['role'] !== 'admin') {
                                 </div>
 
                                 <div class="address-actions">
+                                    <?php if ($addr['is_default'] == 1): ?>
+                                        <span class="btn-active-default">
+                                            ✓ Default
+                                        </span>
+                                    <?php else: ?>
+                                        <form method="post" style="display: inline;" class="scroll-trigger">
+                                            <input type="hidden" name="action" value="set_default">
+                                            <input type="hidden" name="address_id" value="<?= $addr['shipping_address_id'] ?>">
+                                            <button class="btn btn-sm btn-set-default">Set Default</button>
+                                        </form>
+                                    <?php endif; ?>
                                     <a href="?edit_id=<?= $addr['shipping_address_id'] ?>" class="btn btn-sm btn-edit scroll-trigger">Edit</a>
 
                                     <form method="post" style="display: inline;" class="scroll-trigger">
