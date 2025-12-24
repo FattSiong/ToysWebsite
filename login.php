@@ -41,8 +41,23 @@ if (is_post()) {
                     $reset_stmt = $_db->prepare("UPDATE users SET failed_attempts = 0, lockout_until = NULL WHERE user_id = ?");
                     $reset_stmt->execute([$user['user_id']]);
 
-                    // ... Existing Login Logic ...
+                    // --- MEMBER: First-time Phone Verification ---
                     if ($user['role'] === 'member' && empty($user['phone_number'])) {
+                        $_SESSION['partial_login_id'] = $user['user_id'];
+                        $_SESSION['remember_choice'] = $remember;
+                        redirect('verify_phone.php');
+                    }
+
+                    // --- ADMIN/MANAGER: First-time Setup (Email First) ---
+                    if (in_array($user['role'], ['admin', 'manager']) && empty($user['email'])) {
+                        $_SESSION['partial_login_id'] = $user['user_id'];
+                        $_SESSION['remember_choice'] = $remember;
+                        // Admins must set up email first, then phone
+                        redirect('admin_verify_email.php');
+                    }
+
+                    // --- ADMIN/MANAGER: Email done, but Phone missing ---
+                    if (in_array($user['role'], ['admin', 'manager']) && empty($user['phone_number'])) {
                         $_SESSION['partial_login_id'] = $user['user_id'];
                         $_SESSION['remember_choice'] = $remember;
                         redirect('verify_phone.php');
@@ -55,7 +70,7 @@ if (is_post()) {
                     $_SESSION['role']    = $user['role'];
                     $_SESSION['username'] = $user['username'];
 
-                    // Remember Me Logic (Kept same as your file)
+                    // Remember Me Logic
                     if ($remember) {
                         $token = bin2hex(random_bytes(32));
                         $token_hash = hash('sha256', $token);
