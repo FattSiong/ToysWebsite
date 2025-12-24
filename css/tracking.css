@@ -143,6 +143,42 @@
     color: #007bff;
 }
 
+/* --- Refund Button --- */
+.btn-refund {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    
+    /* Default State (Outline Red) */
+    background: white;
+    color: #dc3545; /* Danger Red */
+    border: 1px solid #dc3545;
+}
+
+.btn-refund:hover {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+    transform: translateY(-2px); /* Subtle lift effect */
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2); /* Soft red glow */
+}
+
+.btn-refund:active {
+    transform: translateY(0);
+}
+
+/* Optional: Icon adjustment inside the button */
+.btn-refund i {
+    font-size: 1rem;
+}
+
 /* --- Order Header Card --- */
 .order-header-card {
     background: #fff;

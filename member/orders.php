@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// --- HANDLE ORDER CANCELLATION ---
+// --- 1. KEEP YOUR ORIGINAL CANCELLATION LOGIC ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_cancel'])) {
     $cancel_order_id = $_POST['order_id'];
     $reason = $_POST['cancel_reason']; 
@@ -24,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_cancel'])) {
         $points_earned = $targetOrder['points_earned'];
 
         // 1. Define Cancellable Statuses
-        // Since all orders are paid, both Pending and Processing are valid for cancellation
         $cancellable_statuses = ['Pending', 'Processing'];
 
         if (in_array($status, $cancellable_statuses)) {
@@ -32,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_cancel'])) {
                 $pdo->beginTransaction();
 
                 // 2. Update Status to 'Refunded'
-                // Since the user has already paid, a cancellation is effectively a REFUND.
                 $updateStmt = $pdo->prepare("UPDATE orders SET order_status = 'Refunded', cancellation_reason = ? WHERE order_id = ?");
                 $updateStmt->execute([$reason, $cancel_order_id]);
 
@@ -49,14 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_cancel'])) {
                         ->execute([$item['quantity'], $item['product_id']]);
                 }
 
-                // 5. Reverse Earned Points (Take back points given for this order)
+                // 5. Reverse Earned Points
                 if ($points_earned > 0) {
                     $pdo->prepare("UPDATE users SET current_points = current_points - ? WHERE user_id = ?")->execute([$points_earned, $user_id]);
                     $pdo->prepare("INSERT INTO point_transactions (user_id, order_id, amount, description) VALUES (?, ?, ?, 'Points Reversed (Refund)')")
                         ->execute([$user_id, $cancel_order_id, -$points_earned]);
                 }
 
-                // 6. Return Redeemed Points (Give back points used for discount)
+                // 6. Return Redeemed Points
                 if ($points_redeemed > 0) {
                     $pdo->prepare("UPDATE users SET current_points = current_points + ? WHERE user_id = ?")->execute([$points_redeemed, $user_id]);
                     $pdo->prepare("INSERT INTO point_transactions (user_id, order_id, amount, description) VALUES (?, ?, ?, 'Points Restored (Refund)')")
@@ -76,10 +74,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_cancel'])) {
     }
 }
 
-// 2. Fetch Orders
-$stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY order_date DESC");
-$stmt->execute([$user_id]);
+// --- 2. NEW: FILTERING LOGIC (From Friend's Branch) ---
+
+// Initialize default query
+$sql = "SELECT * FROM orders WHERE user_id = ?";
+$params = [$user_id];
+
+// Get Filter Values from URL
+$f_start_date = $_GET['start_date'] ?? '';
+$f_end_date = $_GET['end_date'] ?? '';
+$f_status = $_GET['status'] ?? '';
+$f_min = $_GET['min_amount'] ?? '';
+$f_max = $_GET['max_amount'] ?? '';
+
+// 2.1 Date Filter
+if (!empty($f_start_date)) {
+    $sql .= " AND DATE(order_date) >= ?";
+    $params[] = $f_start_date;
+}
+if (!empty($f_end_date)) {
+    $sql .= " AND DATE(order_date) <= ?";
+    $params[] = $f_end_date;
+}
+
+// 2.2 Status Filter
+if (!empty($f_status)) {
+    $sql .= " AND order_status LIKE ?"; // Use LIKE to be case-insensitive
+    $params[] = $f_status;
+}
+
+// 2.3 Price Filter
+if (!empty($f_min)) {
+    $sql .= " AND total_amount >= ?";
+    $params[] = $f_min;
+}
+if (!empty($f_max)) {
+    $sql .= " AND total_amount <= ?";
+    $params[] = $f_max;
+}
+
+$sql .= " ORDER BY order_date DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
 $orders = $stmt->fetchAll();
+// -----------------------------------------------------
 ?>
 
 <link rel="stylesheet" href="../css/orders.css">
@@ -87,6 +126,22 @@ $orders = $stmt->fetchAll();
 .alert { padding: 15px; margin: 20px auto; max-width: 1100px; border-radius: 8px; }
 .success-msg { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
 .error-msg { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* Simple styles for the filter box to match your theme */
+.filter-card {
+    max-width: 1100px;
+    margin: 0 auto 30px auto;
+    background: #fff;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.filter-row { display: flex; gap: 15px; flex-wrap: wrap; }
+.filter-col { flex: 1; min-width: 200px; }
+.filter-label { display: block; font-weight: bold; font-size: 0.9em; margin-bottom: 5px; color: #555; }
+.filter-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+.filter-actions { margin-top: 15px; text-align: right; }
 </style>
 
 <div class="container">
@@ -95,9 +150,55 @@ $orders = $stmt->fetchAll();
         <span class="order-count"><?php echo count($orders); ?> Orders</span>
     </div>
 
+    <div class="filter-card">
+        <form method="GET" action="orders.php">
+            <div class="filter-row">
+                <div class="filter-col">
+                    <label class="filter-label">Status</label>
+                    <select name="status" class="filter-input">
+                        <option value="">All Statuses</option>
+                        <option value="pending" <?php echo ($f_status == 'pending') ? 'selected' : ''; ?>>Pending</option>
+                        <option value="processing" <?php echo ($f_status == 'processing') ? 'selected' : ''; ?>>Processing</option>
+                        <option value="shipped" <?php echo ($f_status == 'shipped') ? 'selected' : ''; ?>>Shipped</option>
+                        <option value="delivered" <?php echo ($f_status == 'delivered') ? 'selected' : ''; ?>>Delivered</option>
+                        <option value="completed" <?php echo ($f_status == 'completed') ? 'selected' : ''; ?>>Completed</option>
+                        <option value="cancelled" <?php echo ($f_status == 'cancelled') ? 'selected' : ''; ?>>Cancelled</option>
+                        <option value="refunded" <?php echo ($f_status == 'refunded') ? 'selected' : ''; ?>>Refunded</option>
+                    </select>
+                </div>
+
+                <div class="filter-col">
+                    <label class="filter-label">From Date</label>
+                    <input type="date" name="start_date" class="filter-input" value="<?php echo htmlspecialchars($f_start_date); ?>">
+                </div>
+                <div class="filter-col">
+                    <label class="filter-label">To Date</label>
+                    <input type="date" name="end_date" class="filter-input" value="<?php echo htmlspecialchars($f_end_date); ?>">
+                </div>
+
+                <div class="filter-col">
+                    <label class="filter-label">Price (RM)</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="number" name="min_amount" class="filter-input" placeholder="Min" value="<?php echo htmlspecialchars($f_min); ?>">
+                        <input type="number" name="max_amount" class="filter-input" placeholder="Max" value="<?php echo htmlspecialchars($f_max); ?>">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <a href="orders.php" class="btn btn-filter-reset">
+                    <i class="fas fa-undo"></i> Reset
+                </a>
+                <button type="submit" class="btn btn-filter-apply">
+                    <i class="fas fa-filter"></i> Apply Filter
+                </button>
+            </div>
+        </form>
+    </div>
     <?php if(empty($orders)): ?>
         <div style="text-align:center; padding:50px; background:#fff; border-radius:10px;">
-            <p>No orders found.</p>
+            <p>No orders found matching your criteria.</p>
+            <a href="orders.php" class="btn btn-secondary">Clear Filters</a>
             <a href="../index.php" class="btn btn-primary">Start Shopping</a>
         </div>
     <?php else: ?>
@@ -114,7 +215,7 @@ $orders = $stmt->fetchAll();
                 </thead>
                 <tbody>
     <?php foreach ($orders as $order): 
-        // 1. Get Status: Trim spaces and Capitalize first letter (e.g., "pending" -> "Pending")
+        // 1. Get Status
         $raw_status = !empty($order['order_status']) ? $order['order_status'] : 'Pending';
         $status = ucfirst(strtolower(trim($raw_status))); 
         
@@ -146,7 +247,6 @@ $orders = $stmt->fetchAll();
                 $badgeClass = 'status-refunded'; // Black
                 break;
             default:
-                // If status is unknown (e.g. "New"), use Grey
                 $badgeClass = 'status-secondary';
                 break;
         }
@@ -159,6 +259,9 @@ $orders = $stmt->fetchAll();
             <span class="order-status-badge <?php echo $badgeClass; ?>">
                 <?php echo htmlspecialchars($status); ?>
             </span>
+            <?php if(strtolower($status) == 'cancelled' && !empty($order['cancellation_reason'])): ?>
+                <br><small style="color:#888; font-size:0.8em;"><?php echo htmlspecialchars($order['cancellation_reason']); ?></small>
+            <?php endif; ?>
         </td>
         <td style="text-align:right;">
             <a href="order_detail.php?id=<?php echo $order['order_id']; ?>" class="btn btn-view">View</a>
