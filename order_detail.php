@@ -26,71 +26,130 @@ if (!$order) {
     exit;
 }
 
-// 3. Determine Progress
+// 3. Determine Progress & Eligibility
 $status = $order['order_status'];
+$order_date_ts = strtotime($order['order_date']);
+$current_ts = time();
+$days_diff = floor(($current_ts - $order_date_ts) / (60 * 60 * 24));
+
+// Step Logic for Progress Bar
 $step = 1;
 if (stripos($status, 'Processing') !== false) $step = 2;
 if (stripos($status, 'Shipped') !== false) $step = 3;
 if (stripos($status, 'Delivered') !== false || stripos($status, 'Completed') !== false) $step = 4;
+if (stripos($status, 'Refunded') !== false) $step = 4; // Keep bar full if refunded
 
-$can_review = ($step == 4); 
+// Logic Variables
+$can_review = ($step == 4 && stripos($status, 'Refunded') === false); 
+$is_delivered = ($step == 4);
+$is_refunded = (stripos($status, 'Refunded') !== false);
 
-// 4. Handle Review Submission WITH MEDIA
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_review'])) {
-    $prod_id = $_POST['product_id'];
-    $rating = $_POST['rating'];
-    $comment = $_POST['comment'];
+// Refund Eligibility: Status is Delivered AND within 14 days AND not already refunded
+$can_refund = ($is_delivered && !$is_refunded && $days_diff <= 14);
 
-    // Check if already reviewed
-    $check = $pdo->prepare("SELECT review_id FROM reviews WHERE user_id = ? AND product_id = ?");
-    $check->execute([$user_id, $prod_id]);
+// 4. Handle Actions (Review OR Refund)
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    
+    // --- A. HANDLE REFUND REQUEST ---
+    if (isset($_POST['confirm_refund'])) {
+        $reason = $_POST['refund_reason'];
+        
+        if ($can_refund) {
+            try {
+                $pdo->beginTransaction();
 
-    if ($check->rowCount() == 0) {
-        try {
-            $pdo->beginTransaction();
+                // 1. Update Order Status
+                $stmtRef = $pdo->prepare("UPDATE orders SET order_status = 'Refunded', refund_reason = ? WHERE order_id = ?");
+                $stmtRef->execute([$reason, $order_id]);
 
-            // A. Insert Text Review
-            $stmtR = $pdo->prepare("INSERT INTO reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)");
-            $stmtR->execute([$prod_id, $user_id, $rating, $comment]);
-            $new_review_id = $pdo->lastInsertId();
+                // 2. Update Payment Status
+                $pdo->prepare("UPDATE payments SET status = 'Refunded' WHERE order_id = ?")->execute([$order_id]);
 
-            // B. Handle Media Upload
-            // Check if files were uploaded
-            if (isset($_FILES['review_media']) && !empty($_FILES['review_media']['name'][0])) {
-                $target_dir = "images/reviews/";
-                if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
+                // 3. Restock Items
+                $stmtItems = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+                $stmtItems->execute([$order_id]);
+                $itemsToRestock = $stmtItems->fetchAll();
 
-                $total_files = count($_FILES['review_media']['name']);
+                foreach ($itemsToRestock as $item) {
+                    $pdo->prepare("UPDATE products SET stock_quantity = stock_quantity + ? WHERE product_id = ?")
+                        ->execute([$item['quantity'], $item['product_id']]);
+                }
 
-                for ($i = 0; $i < $total_files; $i++) {
-                    $file_name = $_FILES['review_media']['name'][$i];
-                    $file_tmp = $_FILES['review_media']['tmp_name'][$i];
-                    $file_type = $_FILES['review_media']['type'][$i];
-                    
-                    // Generate unique name: review_123_timestamp_filename.jpg
-                    $new_file_name = "review_" . $new_review_id . "_" . time() . "_" . basename($file_name);
-                    $target_file = $target_dir . $new_file_name;
+                // 4. Reverse Points Earned (Take back points given for purchase)
+                $points_earned = $order['points_earned'];
+                if ($points_earned > 0) {
+                    $pdo->prepare("UPDATE users SET current_points = current_points - ? WHERE user_id = ?")->execute([$points_earned, $user_id]);
+                    $pdo->prepare("INSERT INTO point_transactions (user_id, order_id, amount, description) VALUES (?, ?, ?, 'Points Reversed (Refunded Order)')")
+                        ->execute([$user_id, $order_id, -$points_earned]);
+                }
 
-                    // Determine type (image or video)
-                    $media_type = (strpos($file_type, 'video') !== false) ? 'video' : 'image';
+                // 5. Return Points Redeemed (Give back points used for discount)
+                $points_redeemed = $order['points_redeemed'];
+                if ($points_redeemed > 0) {
+                    $pdo->prepare("UPDATE users SET current_points = current_points + ? WHERE user_id = ?")->execute([$points_redeemed, $user_id]);
+                    $pdo->prepare("INSERT INTO point_transactions (user_id, order_id, amount, description) VALUES (?, ?, ?, 'Points Returned (Refunded Order)')")
+                        ->execute([$user_id, $order_id, $points_redeemed]);
+                }
 
-                    if (move_uploaded_file($file_tmp, $target_file)) {
-                        // Insert into review_media table
-                        $sqlMedia = "INSERT INTO review_media (review_id, file_path, media_type) VALUES (?, ?, ?)";
-                        $pdo->prepare($sqlMedia)->execute([$new_review_id, $target_file, $media_type]);
+                $pdo->commit();
+                // Refresh page
+                echo "<script>window.location.href='order_detail.php?id=$order_id';</script>";
+                exit;
+
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                echo "<div class='alert alert-danger container mt-3'>Error processing refund: " . $e->getMessage() . "</div>";
+            }
+        }
+    }
+
+    // --- B. HANDLE REVIEW SUBMISSION ---
+    if (isset($_POST['submit_review'])) {
+        $prod_id = $_POST['product_id'];
+        $rating = $_POST['rating'];
+        $comment = $_POST['comment'];
+
+        $check = $pdo->prepare("SELECT review_id FROM reviews WHERE user_id = ? AND product_id = ?");
+        $check->execute([$user_id, $prod_id]);
+
+        if ($check->rowCount() == 0) {
+            try {
+                $pdo->beginTransaction();
+                
+                $stmtR = $pdo->prepare("INSERT INTO reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)");
+                $stmtR->execute([$prod_id, $user_id, $rating, $comment]);
+                $new_review_id = $pdo->lastInsertId();
+
+                // Drag & Drop Media Upload
+                if (isset($_FILES['review_media']) && !empty($_FILES['review_media']['name'][0])) {
+                    $target_dir = "images/reviews/";
+                    if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
+
+                    $total_files = count($_FILES['review_media']['name']);
+                    for ($i = 0; $i < $total_files; $i++) {
+                        $file_name = $_FILES['review_media']['name'][$i];
+                        $file_tmp = $_FILES['review_media']['tmp_name'][$i];
+                        $file_type = $_FILES['review_media']['type'][$i];
+                        
+                        $new_file_name = "review_" . $new_review_id . "_" . time() . "_" . basename($file_name);
+                        $target_file = $target_dir . $new_file_name;
+                        $media_type = (strpos($file_type, 'video') !== false) ? 'video' : 'image';
+
+                        if (move_uploaded_file($file_tmp, $target_file)) {
+                            $sqlMedia = "INSERT INTO review_media (review_id, file_path, media_type) VALUES (?, ?, ?)";
+                            $pdo->prepare($sqlMedia)->execute([$new_review_id, $target_file, $media_type]);
+                        }
                     }
                 }
+                $pdo->commit();
+                echo "<div class='alert alert-success container mt-3'>Review submitted successfully!</div>";
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                echo "<div class='alert alert-danger container mt-3'>Error: " . $e->getMessage() . "</div>";
             }
-
-            $pdo->commit();
-            echo "<div class='alert alert-success container mt-3'>Review submitted successfully!</div>";
-
-        } catch (Exception $e) {
-            $pdo->rollBack();
-            echo "<div class='alert alert-danger container mt-3'>Error: " . $e->getMessage() . "</div>";
+        } else {
+            echo "<div class='alert alert-warning container mt-3'>You already reviewed this item.</div>";
         }
-    } else {
-        echo "<div class='alert alert-warning container mt-3'>You already reviewed this item.</div>";
     }
 }
 
@@ -107,13 +166,31 @@ $items = $stmtI->fetchAll();
 ?>
 
 <div class="container mt-4 mb-5">
-    <a href="orders.php" class="btn btn-outline-secondary mb-3">&larr; Back to Orders</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="orders.php" class="btn btn-outline-secondary">&larr; Back to Orders</a>
+        
+        <!-- REFUND BUTTON (Only visible if eligible) -->
+        <?php if ($can_refund): ?>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#refundModal">
+                <i class="fas fa-undo"></i> Request Refund
+            </button>
+        <?php elseif ($is_refunded): ?>
+            <span class="badge bg-danger p-2 fs-6">Refunded</span>
+        <?php endif; ?>
+    </div>
 
     <!-- ORDER HEADER -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white d-flex justify-content-between">
             <span>Order #<?php echo $order['order_id']; ?></span>
-            <span><?php echo date('M d, Y h:i A', strtotime($order['order_date'])); ?></span>
+            
+            <div>
+                <!-- PDF BUTTON -->
+                <a href="receipt.php?order_id=<?php echo $order['order_id']; ?>" target="_blank" class="btn btn-sm btn-light text-primary">
+                    <i class="fas fa-file-pdf"></i> Receipt
+                </a>
+                <span class="ms-3"><?php echo date('M d, Y h:i A', strtotime($order['order_date'])); ?></span>
+            </div>
         </div>
         <div class="card-body">
             <div class="row">
@@ -128,6 +205,12 @@ $items = $stmtI->fetchAll();
                 <div class="col-md-6 text-md-end">
                     <h5>Total Amount:</h5>
                     <h3 class="text-success">RM <?php echo number_format($order['total_amount'], 2); ?></h3>
+                    <?php if ($is_refunded): ?>
+                        <small class="text-danger fw-bold">Amount Refunded</small>
+                        <?php if (!empty($order['refund_reason'])): ?>
+                            <br><small class="text-muted">Reason: <?php echo htmlspecialchars($order['refund_reason']); ?></small>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -185,6 +268,8 @@ $items = $stmtI->fetchAll();
                                         <i class="fas fa-star"></i> Rate Product
                                     </button>
                                 <?php endif; ?>
+                            <?php elseif ($is_refunded): ?>
+                                <span class="badge bg-secondary">Refunded</span>
                             <?php else: ?>
                                 <small class="text-muted">Wait for delivery</small>
                             <?php endif; ?>
@@ -201,7 +286,6 @@ $items = $stmtI->fetchAll();
 <div class="modal fade" id="reviewModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <!-- Added enctype for file upload -->
       <form method="post" enctype="multipart/form-data">
           <div class="modal-header">
             <h5 class="modal-title">Rate: <span id="modalProductName"></span></h5>
@@ -209,7 +293,6 @@ $items = $stmtI->fetchAll();
           </div>
           <div class="modal-body">
             <input type="hidden" name="product_id" id="modalProductId">
-            
             <div class="mb-3">
                 <label class="form-label">Rating</label>
                 <select name="rating" class="form-select">
@@ -220,19 +303,21 @@ $items = $stmtI->fetchAll();
                     <option value="1">★☆☆☆☆ (1/5) Terrible</option>
                 </select>
             </div>
-            
             <div class="mb-3">
                 <label class="form-label">Comment</label>
                 <textarea name="comment" class="form-control" rows="3" placeholder="What did you like or dislike?" required></textarea>
             </div>
-
-            <!-- FILE UPLOAD INPUT -->
             <div class="mb-3">
-                <label class="form-label">Add Photos/Videos (Optional)</label>
-                <input type="file" name="review_media[]" class="form-control" multiple accept="image/*,video/*">
-                <div class="form-text">You can select multiple files.</div>
+                <label class="form-label">Add Photos/Videos</label>
+                <div class="drop-zone" id="drop-zone">
+                    <span class="drop-zone__prompt">
+                        <i class="fas fa-cloud-upload-alt fa-2x"></i><br>
+                        Drag & drop files here or <span class="text-primary text-decoration-underline">Browse</span>
+                    </span>
+                    <input type="file" name="review_media[]" class="drop-zone__input" multiple accept="image/*,video/*">
+                </div>
+                <div id="file-list"></div>
             </div>
-
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -243,11 +328,82 @@ $items = $stmtI->fetchAll();
   </div>
 </div>
 
+<!-- REFUND MODAL -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Request Refund</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Note:</strong> Refunds are only available within 14 days of delivery.</p>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Reason for Refund:</label>
+                <select name="refund_reason" class="form-select" required>
+                    <option value="">Select a reason...</option>
+                    <option value="Item defective/damaged">Item defective/damaged</option>
+                    <option value="Wrong item received">Wrong item received</option>
+                    <option value="Item does not match description">Item does not match description</option>
+                    <option value="Missing parts/accessories">Missing parts/accessories</option>
+                    <option value="Change of mind">Change of mind</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="alert alert-warning">
+                By confirming, your payment will be refunded, and points earned from this purchase will be deducted.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" name="confirm_refund" class="btn btn-danger">Confirm Refund</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
+// Review Modal Logic
 function setReviewProduct(id, name) {
     document.getElementById('modalProductId').value = id;
     document.getElementById('modalProductName').innerText = name;
+    document.getElementById('file-list').innerHTML = '';
 }
+
+// Drag & Drop Logic
+document.addEventListener("DOMContentLoaded", () => {
+    const dropZone = document.getElementById("drop-zone");
+    const inputElement = dropZone.querySelector(".drop-zone__input");
+    const fileListDisplay = document.getElementById("file-list");
+
+    if(dropZone) {
+        dropZone.addEventListener("click", () => inputElement.click());
+        inputElement.addEventListener("change", () => updateFileList(inputElement.files));
+        dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drop-zone--over"); });
+        ["dragleave", "dragend"].forEach(type => dropZone.addEventListener(type, () => dropZone.classList.remove("drop-zone--over")));
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("drop-zone--over");
+            if (e.dataTransfer.files.length) {
+                inputElement.files = e.dataTransfer.files;
+                updateFileList(inputElement.files);
+            }
+        });
+    }
+
+    function updateFileList(files) {
+        fileListDisplay.innerHTML = "";
+        if (files.length > 0) {
+            for (const file of files) {
+                const div = document.createElement("div");
+                div.innerHTML = `<i class="fas fa-paperclip"></i> ${file.name}`;
+                fileListDisplay.appendChild(div);
+            }
+        }
+    }
+});
 </script>
 
 <?php include 'includes/footer.php'; ?>
