@@ -2,6 +2,21 @@
 // verify_phone.php
 require 'base.php';
 
+// --- Determine User ID and Role for AJAX checks ---
+$current_user_id = null;
+$current_role = null;
+
+if (isset($_SESSION['partial_login_id'])) {
+    $current_user_id = $_SESSION['partial_login_id'];
+    // Fetch role from DB since session might not have it fully loaded
+    $stmt = $_db->prepare("SELECT role FROM users WHERE user_id = ?");
+    $stmt->execute([$current_user_id]);
+    $current_role = $stmt->fetchColumn();
+} elseif (isset($_SESSION['user'])) {
+    $current_user_id = $_SESSION['user']['user_id'];
+    $current_role = $_SESSION['user']['role'];
+}
+
 // =================================================================
 // 1. HANDLE AJAX OTP REQUESTS (Shared for both modes)
 // =================================================================
@@ -17,6 +32,23 @@ if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'send_otp') {
         exit;
     }
 
+    // --- UNIQUE PHONE CHECK (Based on Requirements) ---
+    // Rule: Phone cannot be repeated between non-members (admin/manager).
+    // It CAN be repeated if the user is a member, or if it clashes with a member (implied).
+    if (in_array($current_role, ['admin', 'manager'])) {
+        $stmt = $_db->prepare("SELECT COUNT(*) FROM users WHERE phone_number = ? AND role IN ('admin', 'manager') AND user_id != ?");
+        $stmt->execute([$clean_phone, $current_user_id]);
+        if ($stmt->fetchColumn() > 0) {
+            echo json_encode(['success' => false, 'message' => 'This phone number is already in use by another administrator.']);
+            exit;
+        }
+    } 
+    // Note: If role is member, we usually enforce global uniqueness or per-role uniqueness. 
+    // Assuming standard uniqueness for members isn't strictly requested to fail against admins, 
+    // but usually, phone should be unique globally. 
+    // If strict global uniqueness is required, remove the "AND role IN..." part. 
+    // Following strict prompt: "phone number can not be repeated between non-members"
+
     // Convert to International Format
     if (substr($clean_phone, 0, 1) === '0') {
         $clean_phone = '+60' . substr($clean_phone, 1);
@@ -27,7 +59,7 @@ if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'send_otp') {
     
     // Store in Session
     $_SESSION['temp_otp_data'] = [
-        'phone' => $phone,
+        'phone' => $phone, // Store original input for matching later
         'otp' => $otp,
         'expires' => time() + 300
     ];
@@ -78,7 +110,7 @@ $user_id = null;
 $target_phone = '';
 
 if (isset($_SESSION['partial_login_id'])) {
-    // MODE A: Login Verification
+    // MODE A: Login Verification (Member OR Admin First Time)
     $mode = 'login';
     $user_id = $_SESSION['partial_login_id'];
     $target_phone = $_SESSION['temp_otp_data']['phone'] ?? ''; 
@@ -90,7 +122,6 @@ elseif (isset($_SESSION['temp_new_phone']) && isset($_SESSION['user'])) {
     $target_phone = $_SESSION['temp_new_phone'];
 } 
 else {
-    // Neither? Kick them out.
     redirect('login.php');
 }
 
@@ -110,55 +141,78 @@ if (is_post() && !isset($_POST['ajax_action'])) {
     } elseif ($phone_input !== $session_data['phone']) {
         $error = "Phone number changed. Please send OTP again.";
     } elseif ($phone_input !== $target_phone && $mode === 'update') {
-        // Extra security for update mode
         $error = "Phone number does not match the one requested in profile.";
     } elseif (time() > $session_data['expires']) {
         $error = "OTP expired. Send a new one.";
     } elseif ($entered_otp != $session_data['otp']) {
         $error = "Invalid OTP code.";
     } else {
-        // --- SUCCESS ---
         
-        // 1. Update DB (Common for both)
-        $stm = $_db->prepare("UPDATE users SET phone_number = ? WHERE user_id = ?");
-        $stm->execute([$session_data['phone'], $user_id]);
+        // --- FINAL UNIQUENESS CHECK (Double Check) ---
+        // Fetch role again to be sure
+        $stmt_role = $_db->prepare("SELECT role FROM users WHERE user_id = ?");
+        $stmt_role->execute([$user_id]);
+        $role = $stmt_role->fetchColumn();
 
-        // Cleanup OTP data
-        unset($_SESSION['temp_otp_data']);
-
-        if ($mode === 'login') {
-            // --- FINALIZE LOGIN ---
-            $stm = $_db->prepare("SELECT * FROM users WHERE user_id = ?");
-            $stm->execute([$user_id]);
-            $user = $stm->fetch();
-
-            session_regenerate_id(true);
-            $_SESSION['user'] = $user;
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['role'] = $user['role'];
-            $_SESSION['username'] = $user['username'];
-
-            // Remember Me
-            if (isset($_SESSION['remember_choice']) && $_SESSION['remember_choice'] == 1) {
-                $token = bin2hex(random_bytes(32));
-                $token_hash = hash('sha256', $token);
-                $update = $_db->prepare("UPDATE users SET remember_token = ? WHERE user_id = ?");
-                $update->execute([$token_hash, $user['user_id']]);
-                setcookie('remember_me', $user['user_id'] . ':' . $token, time() + (86400 * 30), "/", "", false, true);
+        $valid = true;
+        if (in_array($role, ['admin', 'manager'])) {
+            $stmt = $_db->prepare("SELECT COUNT(*) FROM users WHERE phone_number = ? AND role IN ('admin', 'manager') AND user_id != ?");
+            $stmt->execute([$session_data['phone'], $user_id]);
+            if ($stmt->fetchColumn() > 0) {
+                $error = "Phone number already in use by another administrator.";
+                $valid = false;
             }
+        }
+
+        if ($valid) {
+            // --- SUCCESS ---
             
-            unset($_SESSION['partial_login_id']);
-            unset($_SESSION['remember_choice']);
-            redirect('index.php');
+            // 1. Update DB
+            $stm = $_db->prepare("UPDATE users SET phone_number = ? WHERE user_id = ?");
+            $stm->execute([$session_data['phone'], $user_id]);
 
-        } else {
-            // --- FINALIZE PROFILE UPDATE ---
-            // Update session user data immediately
-            $_SESSION['user']['phone_number'] = $session_data['phone'];
-            unset($_SESSION['temp_new_phone']); // Clear the temp request
+            // Cleanup OTP data
+            unset($_SESSION['temp_otp_data']);
 
-            temp('info', 'Phone number verified and updated successfully!');
-            redirect('profile.php');
+            if ($mode === 'login') {
+                // --- FINALIZE LOGIN ---
+                $stm = $_db->prepare("SELECT * FROM users WHERE user_id = ?");
+                $stm->execute([$user_id]);
+                $user = $stm->fetch();
+
+                session_regenerate_id(true);
+                $_SESSION['user'] = $user;
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['username'] = $user['username'];
+
+                // Remember Me
+                if (isset($_SESSION['remember_choice']) && $_SESSION['remember_choice'] == 1) {
+                    $token = bin2hex(random_bytes(32));
+                    $token_hash = hash('sha256', $token);
+                    $update = $_db->prepare("UPDATE users SET remember_token = ? WHERE user_id = ?");
+                    $update->execute([$token_hash, $user['user_id']]);
+                    setcookie('remember_me', $user['user_id'] . ':' . $token, time() + (86400 * 30), "/", "", false, true);
+                }
+                
+                unset($_SESSION['partial_login_id']);
+                unset($_SESSION['remember_choice']);
+
+                // Redirect based on Role
+                if (in_array($user['role'], ['admin', 'manager'])) {
+                    redirect('admin/dashboard.php');
+                } else {
+                    redirect('index.php');
+                }
+
+            } else {
+                // --- FINALIZE PROFILE UPDATE ---
+                $_SESSION['user']['phone_number'] = $session_data['phone'];
+                unset($_SESSION['temp_new_phone']);
+
+                temp('info', 'Phone number verified and updated successfully!');
+                redirect('profile.php');
+            }
         }
     }
 }
@@ -211,11 +265,7 @@ if (is_post() && !isset($_POST['ajax_action'])) {
         </form>
         
         <div class="auth-footer">
-            <?php if ($mode === 'login'): ?>
-                <a href="logout.php">Cancel Login</a>
-            <?php else: ?>
-                <a href="profile.php">Cancel Update</a>
-            <?php endif; ?>
+            <a href="logout.php">Cancel Setup</a>
         </div>
     </div>
 </div>
