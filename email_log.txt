@@ -1,0 +1,23 @@
+To: tiongfattsiong01@gmail.com
+Subject: Verify your Account
+
+Please click this link to activate your account:
+http://localhost:8001/verify.php?email=tiongfattsiong01@gmail.com&code=f90c81a48da148f67feaa75dc0576ba5
+
+-----------------------
+To: tiongfattsiong01@gmail.com
+Subject: Verify Account
+
+Link:
+http://localhost:8001/verify.php?token=69478a337c9802e558c86ec186027f09
+
+(Expires on: 2025-12-05 04:12:32)
+
+To: tiongfattsiong02@gmail.com
+Subject: Verify Account
+
+Link:
+http://localhost:8001/verify.php?token=80ae85f4796582b1316b8f7087442842
+
+(Expires on: 2025-12-05 04:14:56)
+
