@@ -198,12 +198,12 @@ include '../includes/header.php';
 
 <div class="filter-bar">
     <form action="" method="GET" class="filter-form" id="filterForm">
-        <?php if ($current_tab !== 'All'): ?><input type="hidden" name="status" value="<?= htmlspecialchars($current_tab) ?>"><?php endif; ?>
+        <?php if ($current_tab !== 'All'): ?>
+            <input type="hidden" name="status" value="<?= htmlspecialchars($current_tab) ?>">
+        <?php endif; ?>
 
         <div class="filter-group search-group">
-            <button type="submit" class="search-submit-btn">
-                <i class="icon fa-search"></i>
-            </button>
+            <button type="submit" class="search-submit-btn"><i class="icon fa-search"></i></button>
             <input type="text" name="search" class="form-input search-input-field" placeholder="Search Product" value="<?= htmlspecialchars($search_query) ?>">
 
             <?php if (!empty($search_query)): ?>
