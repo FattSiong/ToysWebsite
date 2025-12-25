@@ -1,0 +1,181 @@
+/* css/success.css */
+
+/* --- Main Page Wrapper --- */
+.success-wrapper {
+    min-height: 85vh; /* Covers most of the screen */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Subtle modern gradient background */
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+    font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
+}
+
+/* --- The Success Card --- */
+.success-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 480px;
+    padding: 60px 40px;
+    border-radius: 20px;
+    /* Soft, deep shadow for a "floating" effect */
+    box-shadow: 0 15px 35px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Green top accent line */
+.success-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: #28a745;
+}
+
+/* --- Success Icon --- */
+.icon-success {
+    font-size: 80px;
+    color: #28a745;
+    margin-bottom: 25px;
+    display: inline-block;
+    /* Bounce animation */
+    animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* --- Typography --- */
+.success-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.5px;
+}
+
+.success-message {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+    line-height: 1.5;
+}
+
+.order-ref {
+    display: inline-block;
+    background-color: #f8f9fa;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 1rem;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 30px;
+    border: 1px solid #e9ecef;
+}
+
+/* --- Points Badge (Golden Reward Look) --- */
+.points-badge {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 12px 25px;
+    border-radius: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    margin-bottom: 35px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Neutral Badge for 0 Points */
+.points-badge.zero-points {
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+    box-shadow: none;
+}
+.points-badge.zero-points i {
+    color: #adb5bd; /* Grey Icon */
+}
+
+/* --- Action Buttons --- */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Primary Button (View Orders) */
+.btn-home {
+    background-color: #007bff;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.25);
+    border: none;
+}
+
+.btn-home:hover {
+    background-color: #0069d9;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 14px rgba(0, 123, 255, 0.25);
+    color: white;
+}
+
+/* Secondary Button (Receipt) */
+.btn-receipt {
+    background-color: #fff;
+    color: #495057;
+    border: 2px solid #e9ecef;
+    padding: 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-receipt:hover {
+    border-color: #ced4da;
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+/* Link (Back to Shop) */
+.link-back {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-decoration: none;
+    margin-top: 15px;
+    display: inline-block;
+    transition: color 0.2s;
+}
+
+.link-back:hover {
+    color: #343a40;
+    text-decoration: underline;
+}
+
+/* --- Animations --- */
+@keyframes slideUpFade {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounceIn {
+    0% { opacity: 0; transform: scale(0.3); }
+    50% { opacity: 1; transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}

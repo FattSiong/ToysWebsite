@@ -1,0 +1,79 @@
+/* css/products.css */
+
+.shop-container {
+    padding: 0; /* Aligning with main container */
+}
+
+.welcome-banner {
+    background-color: #f8f9fa;
+    padding: 40px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+/* Grid System */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+/* Card Styling */
+.product-card {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%; /* Uniform height */
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.product-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: contain; /* Ensures whole toy is visible */
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.card-body {
+    padding: 15px;
+    text-align: center;
+}
+
+.product-card h3, .product-card .card-title {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #333;
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-card .price {
+    font-size: 1.2rem;
+    color: #28a745;
+    font-weight: bold;
+    margin-bottom: 15px;
+    display: block;
+}
+
+/* Reviews */
+.checked {
+    color: #ffc107; /* Star Color */
+}
+
+.review-card {
+    border-left: 4px solid #007bff;
+    background-color: #f8f9fa;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}

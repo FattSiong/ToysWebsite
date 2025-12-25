@@ -1,0 +1,289 @@
+/* Profile Page Layout */
+.profile-container {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.profile-header {
+    margin-bottom: 30px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 15px;
+}
+
+.profile-header h1 {
+    margin: 0;
+    color: #333;
+}
+
+/* Two-Column Layout */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cards */
+.profile-card {
+    background: #fff;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.profile-card h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #444;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* Profile Image Section */
+.profile-img-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.profile-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #f8f9fa;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.change-photo-btn {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #007bff;
+    cursor: pointer;
+}
+
+.change-photo-btn:hover {
+    text-decoration: underline;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-group input, 
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-group input:focus {
+    border-color: #80bdff;
+    outline: none;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+/* Buttons */
+.btn-block {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Address Section */
+.address-section {
+    margin-top: 40px;
+}
+
+.address-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.address-card {
+    background: #fff;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    transition: transform 0.2s;
+}
+
+.address-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.address-tag {
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: #495057;
+    margin-bottom: 5px;
+    display: inline-block;
+}
+
+.address-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #eee;
+    text-align: right;
+}
+
+/* Alerts */
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #c3e6cb;
+}
+
+/* Scrollable Address List */
+.address-scroll-container {
+    max-height: 600px; /* Limits height */
+    overflow-y: auto;  /* Enables scrolling */
+    padding-right: 10px;
+    margin-bottom: 20px;
+
+    /* Scrollbar styling for nicer look */
+    scrollbar-width: thin;
+    scrollbar-color: #ced4da #f1f1f1;
+}
+
+.address-scroll-container::-webkit-scrollbar {
+    width: 8px;
+}
+.address-scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.address-scroll-container::-webkit-scrollbar-thumb {
+    background: #ced4da;
+    border-radius: 4px;
+}
+.address-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+/* Edit Button Styling */
+.btn-edit {
+    background-color: #ffc107;
+    color: #212529;
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    text-decoration: none;
+    margin-right: 5px;
+    display: inline-block;
+    border: 1px solid #ffc107;
+    cursor: pointer;
+}
+.btn-edit:hover {
+    background-color: #e0a800;
+    text-decoration: none;
+    color: #212529;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    color: white;
+}
+
+/* Secondary Button (for Cancel) */
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: 1px solid #6c757d;
+    transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+/* Small Button Size */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+/* Block Button spacing adjustments */
+.btn-block + .btn-block {
+    margin-top: 0.5rem; /* Space between stacked buttons */
+}
+
+.btn-set-default {
+    background-color: #17a2b8; /* Teal color */
+    color: white;
+    padding: 5px 10px;       /* Matches btn-edit size */
+    font-size: 0.85rem;      /* Matches btn-edit text size */
+    border-radius: 4px;
+    text-decoration: none;
+    margin-right: 5px;
+    display: inline-block;
+    border: 1px solid #17a2b8;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-set-default:hover {
+    background-color: #138496; /* Darker Teal on hover */
+    border-color: #117a8b;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-active-default {
+    background-color: #28a745; /* Green for active/success */
+    color: white;
+    padding: 5px 10px;         /* Same padding as Edit/Set Default buttons */
+    font-size: 0.85rem;        /* Same font size */
+    border-radius: 4px;
+    display: inline-block;
+    margin-right: 5px;
+    border: 1px solid #28a745;
+    cursor: default;           /* Shows arrow cursor since it's not clickable */
+}
