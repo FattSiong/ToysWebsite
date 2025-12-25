@@ -14,7 +14,8 @@ $username = $_SESSION['username'] ?? 'Guest';
 $current_page = basename($_SERVER['PHP_SELF']);
 
 // 2. Identify Page Type
-$is_admin_page = ($role === 'admin' && strpos($_SERVER['PHP_SELF'], '/admin/') !== false);
+// UPDATED: Allow 'manager' to be recognized as an admin page user
+$is_admin_page = (($role === 'admin' || $role === 'manager') && strpos($_SERVER['PHP_SELF'], '/admin/') !== false);
 
 // Default to placeholder
 $profile_pic = $base_path . 'images/no-image.jpg'; 
@@ -26,7 +27,7 @@ if ($is_logged_in && !empty($_SESSION['user']['profile_photo'])) {
 
 // Optional: Logic to get actual cart count
 $cart_count = 0;
-if ($is_logged_in && isset($pdo)) { // Assuming $pdo is available from base.php
+if ($is_logged_in && isset($pdo)) { 
     $stmtC = $pdo->prepare("SELECT SUM(quantity) FROM cart_items ci JOIN cart c ON ci.cart_id = c.cart_id WHERE c.user_id = ?");
     $stmtC->execute([$_SESSION['user_id']]);
     $cart_count = $stmtC->fetchColumn() ?: 0;
@@ -66,7 +67,7 @@ if ($is_logged_in && isset($pdo)) { // Assuming $pdo is available from base.php
         </div>
 
         <ul class="sidebar-menu">
-            <?php if ($role !== 'admin'): ?>
+            <?php if ($role !== 'admin' && $role !== 'manager'): ?>
                 <li>
                     <a href="<?= $base_path ?>index.php" class="<?= $current_page == 'index.php' ? 'active' : '' ?>">
                         <i class="icon fas fa-home"></i> Home
@@ -76,7 +77,7 @@ if ($is_logged_in && isset($pdo)) { // Assuming $pdo is available from base.php
 
             <?php if ($is_logged_in): ?>
 
-                <?php if ($role === 'admin'): ?>
+                <?php if ($role === 'admin' || $role === 'manager'): ?>
                     <li class="menu-label" style="padding: 10px 20px; color: #888; font-size: 0.8em; text-transform: uppercase;">Admin Tools</li>
 
                     <li>
@@ -105,6 +106,14 @@ if ($is_logged_in && isset($pdo)) { // Assuming $pdo is available from base.php
                         </a>
                     </li>
 
+                    <?php if ($role === 'manager'): ?>
+                    <li>
+                        <a href="<?= $base_path ?>admin/manage_admin.php" class="<?= $current_page == 'manage_admin.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-user-shield"></i> Manage Admin
+                        </a>
+                    </li>
+                    <?php endif; ?>
+
                     <li class="menu-label" style="padding: 10px 20px; color: #888; font-size: 0.8em; text-transform: uppercase;">Account</li>
                 <?php endif; ?>
 
@@ -114,7 +123,7 @@ if ($is_logged_in && isset($pdo)) { // Assuming $pdo is available from base.php
                     </a>
                 </li>
 
-                <?php if ($role !== 'admin'): ?>
+                <?php if ($role !== 'admin' && $role !== 'manager'): ?>
                     <li>
                         <a href="<?= $base_path ?>member/points.php" class="<?= $current_page == 'points.php' ? 'active' : '' ?>">
                             <i class="icon fas fa-coins"></i> My Points
@@ -161,12 +170,12 @@ if ($is_logged_in && isset($pdo)) { // Assuming $pdo is available from base.php
                     <i class="icon fas fa-bars"></i>
                 </button>
 
-                <a href="<?= $base_path ?><?= $role === 'admin' ? 'admin/dashboard.php' : 'index.php' ?>" class="logo">
+                <a href="<?= $base_path ?><?= ($role === 'admin' || $role === 'manager') ? 'admin/dashboard.php' : 'index.php' ?>" class="logo">
                     <i class="icon fas fa-robot"></i> ToyShop
                 </a>
             </div>
 
-            <?php if ($role !== 'admin'): ?>
+            <?php if ($role !== 'admin' && $role !== 'manager'): ?>
                 <div class="search-bar">
                     <form action="<?= $base_path ?>index.php" method="GET">
                         <input type="text" name="search" placeholder="Search toys...">
@@ -177,7 +186,7 @@ if ($is_logged_in && isset($pdo)) { // Assuming $pdo is available from base.php
 
             <nav>
                 <ul class="nav-links">
-                    <?php if ($is_logged_in && $role !== 'admin'): ?>
+                    <?php if ($is_logged_in && $role !== 'admin' && $role !== 'manager'): ?>
                         <li>
                             <a href="<?= $base_path ?>member/cart.php" class="cart-icon">
                                 <i class="icon fas fa-shopping-cart"></i>

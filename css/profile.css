@@ -36,6 +36,7 @@
     border: 1px solid #e1e4e8;
     border-radius: 8px;
     padding: 25px;
+    margin-bottom: 15px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
@@ -241,7 +242,25 @@
     color: white;
     text-decoration: none;
 }
+/* Cancel Button (Red Outline Style) */
+.btn-cancel {
+    background-color: transparent;
+    color: #dc3545; /* Red Text */
+    border: 1px solid #dc3545; /* Red Border */
+    text-align: center;
+    text-decoration: none;
+    display: block; /* Ensures it fills width */
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    margin-top: 5px; /* Tiny space between Save and Cancel */
+}
 
+.btn-cancel:hover {
+    background-color: #dc3545; /* Fills with Red on hover */
+    color: white;
+    text-decoration: none;
+    border-color: #dc3545;
+}
 /* Small Button Size */
 .btn-sm {
     padding: 0.25rem 0.5rem;
@@ -286,4 +305,129 @@
     margin-right: 5px;
     border: 1px solid #28a745;
     cursor: default;           /* Shows arrow cursor since it's not clickable */
+}
+
+/* ... existing code ... */
+
+/* Map Styling */
+#map {
+    height: 300px;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+}
+
+/* Controls inside the map (optional) */
+.map-controls {
+    margin-top: 10px;
+    border: 1px solid transparent;
+    border-radius: 2px 0 0 2px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    height: 32px;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+#pac-input {
+    background-color: #fff;
+    font-family: Roboto;
+    font-size: 15px;
+    font-weight: 300;
+    padding: 0 11px 0 13px;
+    text-overflow: ellipsis;
+    width: 300px;
+    margin-top: 10px; /* Position inside map */
+    border: 1px solid #ccc;
+}
+
+/* ... (Keep your existing Profile Layout CSS) ... */
+
+/* --- GOOGLE MAP WIDGET UI --- */
+.map-widget {
+    background: #ffffff;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+}
+
+.map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.map-title {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.map-search-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+/* Search Input Styling */
+.map-search-input {
+    flex: 1;
+    padding: 10px 10px 10px 40px; /* Space for icon */
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.map-search-input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+}
+
+.search-icon-marker {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #adb5bd;
+    pointer-events: none;
+}
+
+/* "Use Current Location" Button */
+.btn-locate {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    color: #495057;
+    padding: 0 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-locate:hover {
+    background-color: #e2e6ea;
+    color: #212529;
+    border-color: #adb5bd;
+}
+
+/* The Map Itself */
+#map {
+    height: 350px;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
 }
