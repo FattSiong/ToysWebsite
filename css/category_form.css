@@ -146,12 +146,26 @@
     margin-bottom: 0;
 }
 
-/* --- NOTIFICATIONS / ERRORS (Matches product_form.css) --- */
+/* --- NOTIFICATIONS / ERRORS --- */
 .error-banner {
-    background: #fee;
-    color: #c00;
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    border: 1px solid #fcc;
+    background-color: #fff2f2;
+    border: 1px solid #ffcfcf;
+    color: #d63031;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Remove default margins from paragraphs inside the banner so spacing is even */
+.error-banner p {
+    margin: 0;
+}
+
+/* Add space between multiple error messages */
+.error-banner p + p {
+    margin-top: 5px;
 }

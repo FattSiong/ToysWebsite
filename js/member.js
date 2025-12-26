@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (ctx) {
         const chartCtx = ctx.getContext('2d');
 
-        // IMPROVEMENT: Create Gradient (Matches Dashboard Style)
+        // Create Gradient (Matches Dashboard Style)
         const gradientFill = chartCtx.createLinearGradient(0, 0, 0, 300);
         gradientFill.addColorStop(0, 'rgba(66, 133, 244, 0.4)'); // Blue top
         gradientFill.addColorStop(1, 'rgba(66, 133, 244, 0.0)'); // Transparent bottom

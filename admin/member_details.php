@@ -82,12 +82,17 @@ if ($user_id) {
 }
 
 // Helper: Profile Pic Logic
-$profile_pic = 'https://ui-avatars.com/api/?name=User&background=random';
-if ($user) {
-    if (!empty($user['profile_photo'])) {
-        $profile_pic = '../uploads/' . $user['profile_photo'];
-    } else {
-        $profile_pic = 'https://ui-avatars.com/api/?name=' . urlencode($user['username']) . '&background=random';
+// 1. Point default to the 'images' folder (since the default image isn't usually uploaded)
+$profile_picture = '../images/profiles/no_profile_image.jpg';
+
+if ($user && !empty($user['profile_photo'])) {
+    // 2. Check the 'uploads/profiles' (PLURAL) folder
+    if (file_exists('../uploads/profiles/' . $user['profile_photo'])) {
+        $profile_picture = '../uploads/profiles/' . $user['profile_photo'];
+    }
+    // 3. Fallback to legacy 'images/profiles' folder
+    else {
+        $profile_picture = '../images/profiles/' . $user['profile_photo'];
     }
 }
 
@@ -111,7 +116,7 @@ include '../includes/header.php';
 
         <div class="profile-card">
             <div class="profile-main">
-                <img src="<?= htmlspecialchars($profile_pic) ?>" alt="Profile" class="profile-avatar">
+                <img src="<?= $profile_picture ?>" alt="Profile" class="profile-avatar">
                 <div class="profile-text">
                     <h1 class="user-name"><?= htmlspecialchars($user['username']) ?></h1>
                     <span class="user-role badge-role"><?= ucfirst($user['role']) ?></span>
