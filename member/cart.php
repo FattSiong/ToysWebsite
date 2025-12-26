@@ -2,6 +2,10 @@
 require_once '../includes/db.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+// --- CONFIG (Same as Checkout) ---
+const SHIPPING_COST = 10.00;
+const FREE_SHIPPING_THRESHOLD = 100;
+
 // Check Login
 if (!isset($_SESSION['user_id'])) {
     include '../includes/header.php';
@@ -49,7 +53,15 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute([$user_id]);
 $items = $stmt->fetchAll();
 
-$total = 0;
+// Initial Calculation for PHP render
+$subtotal = 0;
+foreach ($items as $item) {
+    $subtotal += ($item['price'] * $item['quantity']);
+}
+
+// Shipping Logic
+$shipping_fee = ($subtotal > FREE_SHIPPING_THRESHOLD) ? 0 : SHIPPING_COST;
+$grand_total = $subtotal + $shipping_fee;
 ?>
 
 <link rel="stylesheet" href="../css/cart.css">
@@ -80,8 +92,8 @@ $total = 0;
                         </thead>
                         <tbody>
                             <?php foreach ($items as $item):
-                                $subtotal = $item['price'] * $item['quantity'];
-                                $total += $subtotal;
+                                $row_subtotal = $item['price'] * $item['quantity'];
+                                
                                 // Handle Image Path
                                 $imgUrl = !empty($item['file_path']) ? $item['file_path'] : "https://via.placeholder.com/50";
                                 if (strpos($imgUrl, 'http') !== 0 && strpos($imgUrl, '../') !== 0) {
@@ -113,7 +125,7 @@ $total = 0;
                                             class="qty-input">
                                     </td>
                                     <td style="text-align:right; font-weight:bold;" class="row-subtotal">
-                                        RM <?php echo number_format($subtotal, 2); ?>
+                                        RM <?php echo number_format($row_subtotal, 2); ?>
                                     </td>
                                     <td style="text-align:center;">
                                         <a href="cart.php?remove=<?php echo $item['cart_item_id']; ?>"
@@ -133,17 +145,31 @@ $total = 0;
 
                     <div class="summary-row">
                         <span>Subtotal</span>
-                        <strong id="cart-total-display">RM <?php echo number_format($total, 2); ?></strong>
+                        <strong id="cart-subtotal-display">RM <?php echo number_format($subtotal, 2); ?></strong>
                     </div>
 
                     <div class="summary-row">
                         <span>Shipping</span>
-                        <span>Free</span>
+                        <span id="shipping-display">
+                            <?php echo ($shipping_fee == 0) ? '<strong style="color:#28a745">Free</strong>' : 'RM ' . number_format($shipping_fee, 2); ?>
+                        </span>
+                    </div>
+
+                    <div id="shipping-message-box">
+                        <?php if ($subtotal < FREE_SHIPPING_THRESHOLD): ?>
+                            <div class="shipping-info">
+                                <i class="fas fa-info-circle"></i> Spend <strong>RM <?php echo number_format(FREE_SHIPPING_THRESHOLD - $subtotal, 2); ?></strong> more for Free Shipping!
+                            </div>
+                        <?php else: ?>
+                            <div class="shipping-success">
+                                <i class="fas fa-check-circle"></i> Free Shipping Qualification Met!
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="summary-total">
                         <span>Total</span>
-                        <span style="color: #007bff;" id="cart-grand-total">RM <?php echo number_format($total, 2); ?></span>
+                        <span style="color: #007bff;" id="cart-grand-total">RM <?php echo number_format($grand_total, 2); ?></span>
                     </div>
 
                     <button type="submit" name="checkout" class="btn-checkout">Proceed to Checkout</button>
@@ -158,26 +184,61 @@ $total = 0;
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const qtyInputs = document.querySelectorAll('.qty-input');
+        
+        // Config Constants (Must match PHP)
+        const SHIPPING_COST = 10.00;
+        const FREE_SHIPPING_THRESHOLD = 100.00;
+
         qtyInputs.forEach(input => {
             input.addEventListener('input', updateCartVisuals);
             input.addEventListener('change', updateCartVisuals);
         });
 
         function updateCartVisuals() {
-            let grandTotal = 0;
+            let subtotal = 0;
+
+            // 1. Calculate Subtotal
             document.querySelectorAll('.cart-row').forEach(row => {
                 const price = parseFloat(row.querySelector('.unit-price').getAttribute('data-price'));
                 let qty = parseInt(row.querySelector('.qty-input').value);
                 if (isNaN(qty) || qty < 1) qty = 1;
 
-                const subtotal = price * qty;
-                row.querySelector('.row-subtotal').innerText = 'RM ' + subtotal.toFixed(2);
-                grandTotal += subtotal;
+                const rowTotal = price * qty;
+                row.querySelector('.row-subtotal').innerText = 'RM ' + rowTotal.toFixed(2);
+                subtotal += rowTotal;
             });
 
-            const formattedTotal = 'RM ' + grandTotal.toFixed(2);
-            document.getElementById('cart-total-display').innerText = formattedTotal;
-            document.getElementById('cart-grand-total').innerText = formattedTotal;
+            // 2. Determine Shipping
+            let shippingFee = SHIPPING_COST;
+            if (subtotal > FREE_SHIPPING_THRESHOLD) {
+                shippingFee = 0;
+            }
+
+            // 3. Calculate Grand Total
+            const grandTotal = subtotal + shippingFee;
+
+            // 4. Update DOM Elements
+            document.getElementById('cart-subtotal-display').innerText = 'RM ' + subtotal.toFixed(2);
+            document.getElementById('cart-grand-total').innerText = 'RM ' + grandTotal.toFixed(2);
+
+            // 5. Update Shipping Text & Message
+            const shippingDisplay = document.getElementById('shipping-display');
+            const msgBox = document.getElementById('shipping-message-box');
+
+            if (shippingFee === 0) {
+                shippingDisplay.innerHTML = '<strong style="color:#28a745">Free</strong>';
+                msgBox.innerHTML = `
+                    <div class="shipping-success">
+                        <i class="fas fa-check-circle"></i> Free Shipping Qualification Met!
+                    </div>`;
+            } else {
+                shippingDisplay.innerText = 'RM ' + shippingFee.toFixed(2);
+                const needed = (FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2);
+                msgBox.innerHTML = `
+                    <div class="shipping-info">
+                        <i class="fas fa-info-circle"></i> Spend <strong>RM ${needed}</strong> more for Free Shipping!
+                    </div>`;
+            }
         }
     });
 </script>

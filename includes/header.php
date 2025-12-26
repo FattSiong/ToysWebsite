@@ -100,6 +100,13 @@ if ($is_logged_in && isset($pdo)) {
                             <i class="icon fas fa-shopping-cart"></i> Orders
                         </a>
                     </li>
+                    
+                    <li>
+                        <a href="<?= $base_path ?>admin/manage_vouchers.php" class="<?= $current_page == 'manage_vouchers.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-ticket-alt"></i> Manage Vouchers
+                        </a>
+                    </li>
+
                     <li>
                         <a href="<?= $base_path ?>admin/member_list.php" class="<?= $current_page == 'member_list.php' ? 'active' : '' ?>">
                             <i class="icon fas fa-users"></i> Members
@@ -129,6 +136,13 @@ if ($is_logged_in && isset($pdo)) {
                             <i class="icon fas fa-coins"></i> My Points
                         </a>
                     </li>
+
+                    <li>
+                        <a href="<?= $base_path ?>member/vouchers.php" class="<?= $current_page == 'vouchers.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-ticket-alt"></i> My Vouchers
+                        </a>
+                    </li>
+
                     <li>
                         <a href="<?= $base_path ?>member/orders.php" class="<?= $current_page == 'orders.php' ? 'active' : '' ?>">
                             <i class="icon fas fa-box-open"></i> My Orders

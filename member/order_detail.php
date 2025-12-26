@@ -190,7 +190,7 @@ $stmtI->execute([$user_id, $order_id]);
 $items = $stmtI->fetchAll();
 ?>
 
-<link rel="stylesheet" href="../css/tracking.css">
+<link rel="stylesheet" href="../css/order_details.css">
 
 <div class="container">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
