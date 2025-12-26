@@ -15,7 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         'Pending',
         'Processing',
         'Shipped',
-        'Delivered',
         'Completed',
         'Cancelled',
         'Refund Requested',
@@ -34,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             SUM(CASE WHEN order_status = 'Pending' THEN 1 ELSE 0 END) as pending,
                             SUM(CASE WHEN order_status = 'Processing' THEN 1 ELSE 0 END) as processing,
                             SUM(CASE WHEN order_status = 'Shipped' THEN 1 ELSE 0 END) as shipped,
-                            SUM(CASE WHEN order_status = 'Delivered' THEN 1 ELSE 0 END) as delivered,
                             SUM(CASE WHEN order_status = 'Completed' THEN 1 ELSE 0 END) as completed,
                             SUM(CASE WHEN order_status IN ('Cancelled', 'Refund Requested', 'Refund Rejected', 'Refunded') THEN 1 ELSE 0 END) as cancel_refund
                           FROM orders";
@@ -66,7 +64,6 @@ $stats_sql = "SELECT
                 SUM(CASE WHEN order_status = 'Pending' THEN 1 ELSE 0 END) as pending,
                 SUM(CASE WHEN order_status = 'Processing' THEN 1 ELSE 0 END) as processing,
                 SUM(CASE WHEN order_status = 'Shipped' THEN 1 ELSE 0 END) as shipped,
-                SUM(CASE WHEN order_status = 'Delivered' THEN 1 ELSE 0 END) as delivered,
                 SUM(CASE WHEN order_status = 'Completed' THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN order_status IN ('Cancelled', 'Refund Requested', 'Refund Rejected', 'Refunded') THEN 1 ELSE 0 END) as cancel_refund
               FROM orders";
@@ -159,7 +156,6 @@ function getStatusColor($status)
     switch ($status) {
         case 'Completed':
             return 'status-green';
-        case 'Delivered':
         case 'Shipped':
         case 'Processing':
             return 'status-blue';
@@ -226,10 +222,6 @@ include '../includes/header.php';
         <span class="stat-value" id="stat-shipped"><?= number_format($stats['shipped']) ?></span>
     </div>
     <div class="stat-card">
-        <span class="stat-label c-delivered">Delivered</span>
-        <span class="stat-value" id="stat-delivered"><?= number_format($stats['delivered']) ?></span>
-    </div>
-    <div class="stat-card">
         <span class="stat-label c-completed">Completed</span>
         <span class="stat-value" id="stat-completed"><?= number_format($stats['completed']) ?></span>
     </div>
@@ -244,7 +236,6 @@ include '../includes/header.php';
     <a href="?status=Pending" class="tab-link <?= $current_tab == 'Pending' ? 'active' : '' ?>">Pending</a>
     <a href="?status=Processing" class="tab-link <?= $current_tab == 'Processing' ? 'active' : '' ?>">Processing</a>
     <a href="?status=Shipped" class="tab-link <?= $current_tab == 'Shipped' ? 'active' : '' ?>">Shipped</a>
-    <a href="?status=Delivered" class="tab-link <?= $current_tab == 'Delivered' ? 'active' : '' ?>">Delivered</a>
     <a href="?status=Completed" class="tab-link <?= $current_tab == 'Completed' ? 'active' : '' ?>">Completed</a>
     <a href="?status=Cancel/Refund" class="tab-link <?= $current_tab == 'Cancel/Refund' ? 'active' : '' ?>">Cancel/Refund</a>
 </div>
@@ -267,7 +258,7 @@ include '../includes/header.php';
             <select name="status" class="form-select" onchange="this.form.submit()">
                 <option value="All">All Status</option>
                 <?php
-                $status_options = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Completed', 'Cancelled', 'Refund Requested', 'Refund Rejected', 'Refunded'];
+                $status_options = ['Pending', 'Processing', 'Shipped', 'Completed', 'Cancelled', 'Refund Requested', 'Refund Rejected', 'Refunded'];
                 foreach ($status_options as $opt):
                 ?>
                     <option value="<?= $opt ?>" <?= $current_tab == $opt ? 'selected' : '' ?>><?= $opt ?></option>
