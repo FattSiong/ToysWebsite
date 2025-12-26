@@ -296,7 +296,6 @@ include '../includes/header.php';
         $sortTotal = getSortParams('total', $sort_option);
         ?>
         <tr>
-            <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
             <th><a href="<?= $sortId['url'] ?>" class="sortable-link <?= $sortId['class'] ?>">Order ID <i class="icon fa <?= $sortId['icon'] ?>"></i></a></th>
             <th>Customer Info</th>
             <th><a href="<?= $sortDate['url'] ?>" class="sortable-link <?= $sortDate['class'] ?>">Order Date <i class="icon fa <?= $sortDate['icon'] ?>"></i></a></th>
@@ -310,7 +309,6 @@ include '../includes/header.php';
         <?php if (count($orders) > 0): ?>
             <?php foreach ($orders as $row): ?>
                 <tr>
-                    <td><input type="checkbox" name="selected_ids[]" value="<?= $row['order_id'] ?>"></td>
                     <td><strong>#<?= htmlspecialchars($row['order_id']) ?></strong></td>
                     <td>
                         <div style="display: flex; flex-direction: column;">
