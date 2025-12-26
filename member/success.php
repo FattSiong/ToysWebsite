@@ -47,7 +47,7 @@ try {
         $points_earned_now = floor($amount_paid);
 
         // --- C. INSERT ORDER ---
-        $orderSql = "INSERT INTO orders (user_id, shipping_address_id, total_amount, order_status, points_redeemed, point_discount, points_earned) VALUES (?, ?, ?, 'Processing', ?, ?, ?)";
+        $orderSql = "INSERT INTO orders (user_id, shipping_address_id, total_amount, order_status, points_redeemed, point_discount, points_earned) VALUES (?, ?, ?, 'Pending', ?, ?, ?)";
         $pdo->prepare($orderSql)->execute([
             $user_id, 
             $shipping_id, 

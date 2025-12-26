@@ -1,5 +1,17 @@
 $(document).ready(function () {
     
+    // --- HELPER: UPDATE STATS ---
+    function updateStats(stats) {
+        if (!stats) return;
+        $('#stat-total').text(parseInt(stats.total).toLocaleString());
+        $('#stat-pending').text(parseInt(stats.pending).toLocaleString());
+        $('#stat-processing').text(parseInt(stats.processing).toLocaleString());
+        $('#stat-shipped').text(parseInt(stats.shipped).toLocaleString());
+        $('#stat-delivered').text(parseInt(stats.delivered).toLocaleString());
+        $('#stat-completed').text(parseInt(stats.completed).toLocaleString());
+        $('#stat-cancel-refund').text(parseInt(stats.cancel_refund).toLocaleString());
+    }
+
     // --- 1. HANDLE STATUS CHANGE (Dropdown) ---
     window.updateStatus = function (selectElement) {
         const form = $(selectElement).closest('form');
@@ -22,6 +34,8 @@ $(document).ready(function () {
                 if (response.success) {
                     updateStatusBadge(statusTextSpan, newStatus);
                     selectElement.defaultValue = newStatus;
+                    // Update stats card
+                    updateStats(response.stats);
                 } else {
                     alert('Error updating status: ' + (response.message || 'Unknown error'));
                     selectElement.value = originalStatus;
@@ -95,6 +109,8 @@ $(document).ready(function () {
                     const row = $('button[data-id="' + orderId + '"]').closest('tr');
                     const statusTextSpan = row.find('.text-status');
                     updateStatusBadge(statusTextSpan, newStatus);
+                    // Update stats card
+                    updateStats(response.stats);
                 } else {
                     alert('Error: ' + (response.message || 'Update failed'));
                     btn.prop('disabled', false).text(originalText);
