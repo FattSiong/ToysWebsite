@@ -15,7 +15,7 @@ if (!isset($_SESSION['user_id']) || !isset($_GET['order_id'])) {
 $user_id = $_SESSION['user_id'];
 $order_id = $_GET['order_id'];
 
-// 2. Fetch Order Data (Updated to join Vouchers and get Receiver Name)
+// 2. Fetch Order Data (FIXED: Correctly joins voucher_usage then vouchers)
 $sql = "SELECT o.*, 
         u.username, u.email,
         sa.receiver_name, sa.line1, sa.city, sa.state, sa.postcode, sa.phone,
@@ -23,7 +23,8 @@ $sql = "SELECT o.*,
         FROM orders o
         JOIN users u ON o.user_id = u.user_id
         JOIN shipping_addresses sa ON o.shipping_address_id = sa.shipping_address_id
-        LEFT JOIN vouchers v ON o.voucher_id = v.voucher_id
+        LEFT JOIN voucher_usage vu ON o.voucher_usage_id = vu.id
+        LEFT JOIN vouchers v ON vu.voucher_id = v.voucher_id
         WHERE o.order_id = ? AND o.user_id = ?";
 
 $stmt = $pdo->prepare($sql);
@@ -48,10 +49,12 @@ foreach ($items as $item) {
     $item_subtotal += ($item['price_at_purchase'] * $item['quantity']);
 }
 
-// 2. Calculate Voucher Amount
-// Logic: Voucher = (Item Subtotal) - (Points Discount) - (Final Amount Paid)
-// We use max(0, ...) to prevent negative numbers due to floating point rounding
-$voucher_discount = max(0, $item_subtotal - $order['point_discount'] - $order['total_amount']);
+// 2. Get Shipping Fee (Added)
+$shipping_fee = isset($order['shipping_fee']) ? $order['shipping_fee'] : 0;
+
+// 3. Calculate Voucher Amount
+// Logic: Voucher = (Item Subtotal + Shipping) - (Points Discount) - (Final Amount Paid)
+$voucher_discount = max(0, ($item_subtotal + $shipping_fee) - $order['point_discount'] - $order['total_amount']);
 
 // Determine the display name (Receiver Name is preferred over Username)
 $display_name = !empty($order['receiver_name']) ? $order['receiver_name'] : $order['username'];
@@ -141,7 +144,16 @@ $html .= '
                 <td>RM ' . number_format($item_subtotal, 2) . '</td>
             </tr>';
 
-            // 1. Voucher Discount
+            // 1. Shipping Fee
+            if ($shipping_fee > 0) {
+                $html .= '
+                <tr>
+                    <td>Shipping Fee:</td>
+                    <td>RM ' . number_format($shipping_fee, 2) . '</td>
+                </tr>';
+            }
+
+            // 2. Voucher Discount
             if ($voucher_discount > 0) {
                 $code = $order['voucher_code'] ? "(" . $order['voucher_code'] . ")" : "";
                 $html .= '
@@ -151,7 +163,7 @@ $html .= '
                 </tr>';
             }
 
-            // 2. Points Discount
+            // 3. Points Discount
             if ($order['point_discount'] > 0) {
                 $html .= '
                 <tr>
@@ -189,4 +201,4 @@ $dompdf->render();
 
 // 6. OUTPUT
 $dompdf->stream("ToyShop_Receipt_" . $order_id . ".pdf", ["Attachment" => false]);
-?>
+?>a

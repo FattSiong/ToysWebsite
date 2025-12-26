@@ -1,5 +1,5 @@
-<?php 
-include '../includes/header.php'; 
+<?php
+include '../includes/header.php';
 
 if (!isset($_SESSION['user_id'])) {
     echo "<script>window.location.href='../login.php';</script>";
@@ -11,7 +11,7 @@ $user_id = $_SESSION['user_id'];
 // --- 1. KEEP YOUR ORIGINAL CANCELLATION LOGIC ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_cancel'])) {
     $cancel_order_id = $_POST['order_id'];
-    $reason = $_POST['cancel_reason']; 
+    $reason = $_POST['cancel_reason'];
 
     // A. Verify Order
     $stmtCheck = $pdo->prepare("SELECT order_id, order_status, points_redeemed, points_earned FROM orders WHERE order_id = ? AND user_id = ?");
@@ -63,7 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_cancel'])) {
 
                 $pdo->commit();
                 echo "<div class='alert success-msg'>Order #$cancel_order_id has been cancelled and marked as <strong>Refunded</strong>.</div>";
-
             } catch (Exception $e) {
                 $pdo->rollBack();
                 echo "<div class='alert error-msg'>Error: " . $e->getMessage() . "</div>";
@@ -123,25 +122,66 @@ $orders = $stmt->fetchAll();
 
 <link rel="stylesheet" href="../css/orders.css">
 <style>
-.alert { padding: 15px; margin: 20px auto; max-width: 1100px; border-radius: 8px; }
-.success-msg { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-.error-msg { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert {
+        padding: 15px;
+        margin: 20px auto;
+        max-width: 1100px;
+        border-radius: 8px;
+    }
 
-/* Simple styles for the filter box to match your theme */
-.filter-card {
-    max-width: 1100px;
-    margin: 0 auto 30px auto;
-    background: #fff;
-    border: 1px solid #e1e4e8;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-.filter-row { display: flex; gap: 15px; flex-wrap: wrap; }
-.filter-col { flex: 1; min-width: 200px; }
-.filter-label { display: block; font-weight: bold; font-size: 0.9em; margin-bottom: 5px; color: #555; }
-.filter-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-.filter-actions { margin-top: 15px; text-align: right; }
+    .success-msg {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .error-msg {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    /* Simple styles for the filter box to match your theme */
+    .filter-card {
+        max-width: 1100px;
+        margin: 0 auto 30px auto;
+        background: #fff;
+        border: 1px solid #e1e4e8;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .filter-col {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filter-label {
+        display: block;
+        font-weight: bold;
+        font-size: 0.9em;
+        margin-bottom: 5px;
+        color: #555;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .filter-actions {
+        margin-top: 15px;
+        text-align: right;
+    }
 </style>
 
 <div class="container">
@@ -183,7 +223,7 @@ $orders = $stmt->fetchAll();
                     </div>
                 </div>
             </div>
-            
+
             <div class="filter-actions">
                 <a href="orders.php" class="btn btn-filter-reset">
                     <i class="fas fa-undo"></i> Reset
@@ -194,11 +234,12 @@ $orders = $stmt->fetchAll();
             </div>
         </form>
     </div>
-    <?php if(empty($orders)): ?>
-        <div style="text-align:center; padding:50px; background:#fff; border-radius:10px;">
-            <p>No orders found matching your criteria.</p>
-            <a href="orders.php" class="btn btn-secondary">Clear Filters</a>
-            <a href="../index.php" class="btn btn-primary">Start Shopping</a>
+    <?php if (empty($orders)): ?>
+        <div class="alert alert-info">
+            <h4>No orders found.</h4>
+            <div class="alert-actions">
+                <a href="../index.php" class="btn btn-primary">Start Shopping</a>
+            </div>
         </div>
     <?php else: ?>
         <div class="card">
@@ -213,68 +254,68 @@ $orders = $stmt->fetchAll();
                     </tr>
                 </thead>
                 <tbody>
-    <?php foreach ($orders as $order): 
-        // 1. Get Status
-        $raw_status = !empty($order['order_status']) ? $order['order_status'] : 'Pending';
-        $status = ucfirst(strtolower(trim($raw_status))); 
-        
-        // 2. Default Badge (Grey)
-        $badgeClass = 'status-secondary'; 
-        $canCancel = false;
+                    <?php foreach ($orders as $order):
+                        // 1. Get Status
+                        $raw_status = !empty($order['order_status']) ? $order['order_status'] : 'Pending';
+                        $status = ucfirst(strtolower(trim($raw_status)));
 
-        // 3. Assign Color Class
-        switch($status) {
-            case 'Pending':
-                $badgeClass = 'status-pending'; // Yellow
-                $canCancel = true; 
-                break;
-            case 'Processing':
-                $badgeClass = 'status-processing'; // Blue
-                $canCancel = true;
-                break;
-            case 'Shipped':
-                $badgeClass = 'status-shipped'; // Cyan
-                break;
-            case 'Delivered':
-            case 'Completed':
-                $badgeClass = 'status-completed'; // Green
-                break;
-            case 'Cancelled':
-                $badgeClass = 'status-cancelled'; // Red
-                break;
-            case 'Refunded':
-                $badgeClass = 'status-refunded'; // Black
-                break;
-            default:
-                $badgeClass = 'status-secondary';
-                break;
-        }
-    ?>
-    <tr>
-        <td style="font-weight:bold;">#<?php echo $order['order_id']; ?></td>
-        <td><?php echo date('M d, Y', strtotime($order['order_date'])); ?></td>
-        <td class="price-text">RM <?php echo number_format($order['total_amount'], 2); ?></td>
-        <td>
-            <span class="order-status-badge <?php echo $badgeClass; ?>">
-                <?php echo htmlspecialchars($status); ?>
-            </span>
-            <?php if(strtolower($status) == 'cancelled' && !empty($order['cancellation_reason'])): ?>
-                <br><small style="color:#888; font-size:0.8em;"><?php echo htmlspecialchars($order['cancellation_reason']); ?></small>
-            <?php endif; ?>
-        </td>
-        <td style="text-align:right;">
-            <a href="order_detail.php?id=<?php echo $order['order_id']; ?>" class="btn btn-view">View</a>
-            
-            <?php if ($canCancel): ?>
-                <button class="btn btn-cancel" 
-                        onclick="openCancelModal(<?php echo $order['order_id']; ?>)">
-                    Cancel
-                </button>
-            <?php endif; ?>
-        </td>
-    </tr>
-    <?php endforeach; ?>
-</tbody>
+                        // 2. Default Badge (Grey)
+                        $badgeClass = 'status-secondary';
+                        $canCancel = false;
+
+                        // 3. Assign Color Class
+                        switch ($status) {
+                            case 'Pending':
+                                $badgeClass = 'status-pending'; // Yellow
+                                $canCancel = true;
+                                break;
+                            case 'Processing':
+                                $badgeClass = 'status-processing'; // Blue
+                                $canCancel = true;
+                                break;
+                            case 'Shipped':
+                                $badgeClass = 'status-shipped'; // Cyan
+                                break;
+                            case 'Delivered':
+                            case 'Completed':
+                                $badgeClass = 'status-completed'; // Green
+                                break;
+                            case 'Cancelled':
+                                $badgeClass = 'status-cancelled'; // Red
+                                break;
+                            case 'Refunded':
+                                $badgeClass = 'status-refunded'; // Black
+                                break;
+                            default:
+                                $badgeClass = 'status-secondary';
+                                break;
+                        }
+                    ?>
+                        <tr>
+                            <td style="font-weight:bold;">#<?php echo $order['order_id']; ?></td>
+                            <td><?php echo date('M d, Y', strtotime($order['order_date'])); ?></td>
+                            <td class="price-text">RM <?php echo number_format($order['total_amount'], 2); ?></td>
+                            <td>
+                                <span class="order-status-badge <?php echo $badgeClass; ?>">
+                                    <?php echo htmlspecialchars($status); ?>
+                                </span>
+                                <?php if (strtolower($status) == 'cancelled' && !empty($order['cancellation_reason'])): ?>
+                                    <br><small style="color:#888; font-size:0.8em;"><?php echo htmlspecialchars($order['cancellation_reason']); ?></small>
+                                <?php endif; ?>
+                            </td>
+                            <td style="text-align:right;">
+                                <a href="order_detail.php?id=<?php echo $order['order_id']; ?>" class="btn btn-view">View</a>
+
+                                <?php if ($canCancel): ?>
+                                    <button class="btn btn-cancel"
+                                        onclick="openCancelModal(<?php echo $order['order_id']; ?>)">
+                                        Cancel
+                                    </button>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
             </table>
         </div>
     <?php endif; ?>
@@ -287,7 +328,7 @@ $orders = $stmt->fetchAll();
                 <h3 class="modal-title">Cancel Order</h3>
                 <span class="close-btn" onclick="closeCancelModal()">&times;</span>
             </div>
-            
+
             <div class="modal-body">
                 <p>Are you sure you want to cancel <strong>Order #<span id="displayOrderId"></span></strong>?</p>
                 <p style="font-size:0.9rem; color:#666; margin-bottom:15px;">
@@ -321,7 +362,7 @@ $orders = $stmt->fetchAll();
     function openCancelModal(orderId) {
         document.getElementById("displayOrderId").innerText = orderId;
         document.getElementById("inputOrderId").value = orderId;
-        modal.style.display = "block"; 
+        modal.style.display = "block";
     }
 
     function closeCancelModal() {

@@ -104,7 +104,7 @@ if (is_post() && post('action') == 'change_password') {
 
     if (!password_verify($current_pass, $user['password_hash'])) $_err['current_password'] = 'Incorrect current password';
     // Validate New Password
-    if ($error = check_password($new_password)) {
+    if ($error = check_password($new_pass)) {
         $_err['new_password'] = $error;
     }
     if ($new_pass !== $confirm_pass) $_err['confirm_password'] = 'Passwords do not match';
