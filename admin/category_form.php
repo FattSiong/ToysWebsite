@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+require_once 'validation.php';
 
 // ==========================================
 // 1. INITIALIZATION
@@ -23,7 +24,6 @@ try {
 }
 
 // Fetch ALL Products (for selection)
-// We use GROUP_CONCAT to get a comma-separated list of category IDs for the filter logic
 try {
     $sql = "SELECT p.*, pm.file_path, GROUP_CONCAT(pc.category_id) as category_ids
             FROM products p 
@@ -67,10 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $selected_products = isset($_POST['product_ids']) ? $_POST['product_ids'] : [];
 
-    // Validation
-    if (empty($name)) {
-        $errors[] = "Category Name is required.";
+    // --- VALIDATION START ---
+    $val_name = validateName($name, "Category Name");
+    if ($val_name) {
+        $errors[] = $val_name;
     }
+    // --- VALIDATION END ---
 
     if (empty($errors)) {
         try {
@@ -86,10 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // --- Update Product Links ---
-            // 1. Remove old links
             $pdo->prepare("DELETE FROM product_categories WHERE category_id = ?")->execute([$category_id]);
 
-            // 2. Add new links
             if (!empty($selected_products)) {
                 $insert_stmt = $pdo->prepare("INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)");
                 foreach ($selected_products as $prod_id) {
@@ -125,7 +125,7 @@ include '../includes/header.php';
     </div>
 <?php endif; ?>
 
-<form action="" method="POST" id="mainForm" novalidate class="category-form-container">
+<form action="" method="POST" id="mainForm" novalidate class="category-form-container" novalidate>
     <div id="hidden-inputs-container"></div>
 
     <div class="card">
@@ -134,7 +134,10 @@ include '../includes/header.php';
             <div class="form-group">
                 <label for="name">Name</label>
                 <input type="text" id="name" name="name" class="form-input"
-                    value="<?= htmlspecialchars($name) ?>" placeholder="e.g., Action Figures" required>
+                    value="<?= htmlspecialchars($name) ?>" 
+                    placeholder="e.g., Action Figures" 
+                    required 
+                    maxlength="50">
             </div>
         </div>
     </div>
