@@ -3,7 +3,7 @@
    ========================================= */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* Fits all status cards in one row */
+    grid-template-columns: repeat(6, 1fr); /* Fits all status cards in one row */
     gap: 15px;
     margin-bottom: 25px;
 }
