@@ -142,10 +142,30 @@
     color: #555;
 }
 
+/* --- NEW SHIPPING INFO STYLES --- */
+.shipping-info {
+    font-size: 0.85rem;
+    color: #17a2b8; /* Blue */
+    margin-top: -10px;
+    margin-bottom: 15px;
+    text-align: right;
+    line-height: 1.4;
+}
+
+.shipping-success {
+    font-size: 0.85rem;
+    color: #28a745; /* Green */
+    margin-top: -10px;
+    margin-bottom: 15px;
+    text-align: right;
+    font-weight: 500;
+}
+/* -------------------------------- */
+
 .summary-total {
     display: flex;
     justify-content: space-between;
-    margin-top: 20px;
+    margin-top: 10px;
     padding-top: 15px;
     border-top: 2px solid #eee;
     font-weight: 700;

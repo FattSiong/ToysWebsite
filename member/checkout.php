@@ -6,6 +6,8 @@ include '../includes/header.php';
 const POINTS_PER_DOLLAR_EARNED = 1;
 const POINTS_EXCHANGE_RATE = 0.10;
 const MIN_POINTS_THRESHOLD = 50;
+const SHIPPING_COST = 10.00;         // Standard Fee
+const FREE_SHIPPING_THRESHOLD = 100; // <--- ADDED: Free shipping if spend > 100
 
 // STRIPE KEYS
 $stripeSecretKey = 'sk_test_51SeuhSEicrNwy8rsAMacjNRNiv1UvST0Tlpfo9CCmD7dZFuQZBJGx7dmC5WFPiugMkCvTmvlimnKB6Fps8AkhNAv00VUXMtoc8';
@@ -29,7 +31,17 @@ $addrStmt = $pdo->prepare("SELECT * FROM shipping_addresses WHERE user_id = ? OR
 $addrStmt->execute([$user_id]);
 $savedAddresses = $addrStmt->fetchAll();
 
-// 2. FETCH CART
+// 2. FETCH AVAILABLE VOUCHERS
+$vSql = "SELECT vu.id AS usage_id, v.* FROM voucher_usage vu 
+         JOIN vouchers v ON vu.voucher_id = v.voucher_id 
+         WHERE vu.user_id = ? 
+         AND vu.is_used = 0 
+         AND (v.expiry_date IS NULL OR v.expiry_date >= CURDATE())";
+$vStmt = $pdo->prepare($vSql);
+$vStmt->execute([$user_id]);
+$myVouchers = $vStmt->fetchAll();
+
+// 3. FETCH CART
 $sql = "SELECT ci.*, p.name, p.price, p.product_id FROM cart c JOIN cart_items ci ON c.cart_id = ci.cart_id JOIN products p ON ci.product_id = p.product_id WHERE c.user_id = ?";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$user_id]);
@@ -44,39 +56,86 @@ if (empty($cart_items)) {
     exit;
 }
 
-// 3. POINTS LOGIC (Original)
+// =========================================================
+// 4. VOUCHER, SHIPPING & POINTS CALCULATION LOGIC
+// =========================================================
+
+// A. Initialize Shipping (Check Threshold logic here)
+$shipping_fee = SHIPPING_COST;
+
+// --- ADDED: Automatic Free Shipping Threshold ---
+if ($cart_total > FREE_SHIPPING_THRESHOLD) {
+    $shipping_fee = 0;
+}
+
+$selected_usage_id = isset($_POST['voucher_usage_id']) ? $_POST['voucher_usage_id'] : '';
+$voucher_discount = 0;
+$applied_voucher = null;
+
+if (!empty($selected_usage_id)) {
+    foreach ($myVouchers as $v) {
+        if ($v['usage_id'] == $selected_usage_id) {
+            // Check Min Spend for Voucher
+            if ($cart_total >= $v['min_spend']) {
+                $applied_voucher = $v;
+                
+                if ($v['discount_type'] == 'fixed') {
+                    $voucher_discount = $v['discount_value'];
+                } elseif ($v['discount_type'] == 'percentage') {
+                    $voucher_discount = $cart_total * ($v['discount_value'] / 100);
+                } else {
+                    // Voucher overrides shipping fee to 0 (useful if cart < 100)
+                    $shipping_fee = 0; 
+                }
+            }
+            break;
+        }
+    }
+}
+
+// Cap discount at cart total
+if ($voucher_discount > $cart_total) $voucher_discount = $cart_total;
+
+// Calculate Total
+$total_after_voucher = ($cart_total - $voucher_discount) + $shipping_fee;
+
+// B. Points Calculation
 $use_points = isset($_POST['use_points']);
-$discount_amount = 0;
+$point_discount = 0;
 $points_to_redeem = 0;
 
 if ($use_points && $current_points >= MIN_POINTS_THRESHOLD) {
-    $max_discount = $current_points * POINTS_EXCHANGE_RATE;
-    if ($max_discount >= $cart_total) {
-        $discount_amount = $cart_total;
-        $points_to_redeem = $cart_total / POINTS_EXCHANGE_RATE;
+    $max_point_discount = $current_points * POINTS_EXCHANGE_RATE;
+    
+    if ($max_point_discount >= $total_after_voucher) {
+        $point_discount = $total_after_voucher;
+        $points_to_redeem = $total_after_voucher / POINTS_EXCHANGE_RATE;
     } else {
-        $discount_amount = $max_discount;
+        $point_discount = $max_point_discount;
         $points_to_redeem = $current_points;
     }
 }
-$final_total = $cart_total - $discount_amount;
+
+$final_total = $total_after_voucher - $point_discount;
 
 // =========================================================
-// 4. PROCESS "PLACE ORDER"
+// 5. PROCESS "PLACE ORDER"
 // =========================================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
     try {
-        // --- STEP A: SAVE DATA TO SESSION ---
         $orderData = [
             'user_id' => $user_id,
             'address_mode' => $_POST['address_mode'],
             'points_to_redeem' => $points_to_redeem,
-            'discount_amount'  => $discount_amount,
+            'point_discount'   => $point_discount,
+            'voucher_usage_id' => $applied_voucher ? $applied_voucher['usage_id'] : null,
+            'voucher_discount' => $voucher_discount,
+            'shipping_fee'     => $shipping_fee,
             'final_total'      => $final_total,
             'cart_items'       => $cart_items
         ];
 
-        // Handle Address Data
+        // Address Handling
         if ($_POST['address_mode'] === 'saved' && !empty($_POST['selected_address_id'])) {
             $orderData['shipping_id'] = $_POST['selected_address_id'];
         } else {
@@ -94,17 +153,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
 
         $_SESSION['pending_order'] = $orderData;
 
-        // --- STEP B: CREATE STRIPE SESSION (WITH 404 FIX) ---
-        // Dynamic URL detection
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-        $domainName = $_SERVER['HTTP_HOST'];
-        $path = str_replace('\\', '/', dirname($_SERVER['PHP_SELF'])); 
-        $domain = $protocol . $domainName . $path;
+        // Bypass Payment if total is 0
+        if ($final_total <= 0) {
+            echo "<script>window.location.href='success.php?session_id=free_order_bypass';</script>";
+            exit;
+        }
 
+        // Stripe
+        $domain = "http://localhost:8001/member"; 
+        
         $line_items_stripe = [[
             'price_data' => [
                 'currency' => 'myr',
-                'product_data' => ['name' => 'ToysWebsite Order'],
+                'product_data' => ['name' => 'Order Total (Inc. Shipping)'],
                 'unit_amount' => round($final_total * 100),
             ],
             'quantity' => 1,
@@ -114,6 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             'payment_method_types' => ['card'],
             'line_items' => $line_items_stripe,
             'mode' => 'payment',
+            'success_url' => $domain . '/success.php?session_id={CHECKOUT_SESSION_ID}',
             'success_url' => $domain . '/success.php?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => $domain . '/checkout.php?error=cancelled',
         ]);
@@ -134,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
 
             <div class="checkout-form-section">
                 <h3 class="section-heading"><i class="fas fa-truck"></i> Shipping Details</h3>
-
+                
                 <div class="address-tabs">
                     <input type="radio" name="address_mode" value="saved" id="tab-saved" class="tab-radio"
                         <?php echo !empty($savedAddresses) ? 'checked' : ''; ?>
@@ -229,6 +291,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
 
             <div class="checkout-summary-card">
                 <h3 class="section-heading"><i class="fas fa-shopping-cart"></i> Order Summary</h3>
+                
                 <div class="summary-items-list">
                     <?php foreach ($cart_items as $item): ?>
                         <div class="summary-item">
@@ -241,6 +304,69 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
                     <?php endforeach; ?>
                 </div>
 
+                <hr>
+
+                <div style="margin-bottom: 20px;">
+                    <h4 style="font-size: 16px; margin-bottom: 10px; margin-top: 10px;">Select a Voucher</h4>
+                    
+                    <div class="voucher-grid">
+                        <label class="voucher-card v-gray <?php echo empty($selected_usage_id) ? 'selected' : ''; ?>">
+                            <input type="radio" name="voucher_usage_id" value="" 
+                                onchange="this.form.submit()" 
+                                <?php echo empty($selected_usage_id) ? 'checked' : ''; ?>>
+                            <div style="display:flex; align-items:center;">
+                                <i class="fas fa-ban v-icon text-muted"></i>
+                                <div class="v-info">
+                                    <h6>Don't use voucher</h6>
+                                </div>
+                            </div>
+                        </label>
+
+                        <?php if (empty($myVouchers)): ?>
+                            <p class="text-muted" style="font-size:0.9rem; font-style:italic;">No vouchers available.</p>
+                        <?php else: ?>
+                            <?php foreach($myVouchers as $v): 
+                                $isDisabled = ($cart_total < $v['min_spend']);
+                                $isSelected = ($v['usage_id'] == $selected_usage_id);
+                                
+                                // Styles
+                                $colorClass = 'v-red';
+                                $iconClass = 'fa-money-bill-wave';
+                                $textClass = 'text-red';
+                                
+                                if($v['discount_type'] == 'percentage') {
+                                    $colorClass = 'v-orange';
+                                    $iconClass = 'fa-percent';
+                                    $textClass = 'text-orange';
+                                    $desc = intval($v['discount_value']) . '% OFF';
+                                } elseif($v['discount_type'] == 'fixed') {
+                                    $desc = 'RM' . intval($v['discount_value']) . ' OFF';
+                                } else {
+                                    $colorClass = 'v-blue';
+                                    $iconClass = 'fa-truck';
+                                    $textClass = 'text-blue';
+                                    $desc = 'Free Shipping';
+                                }
+                            ?>
+                            <label class="voucher-card <?php echo $colorClass; ?> <?php echo $isSelected ? 'selected' : ''; ?> <?php echo $isDisabled ? 'disabled' : ''; ?>">
+                                <input type="radio" name="voucher_usage_id" value="<?php echo $v['usage_id']; ?>" 
+                                    onchange="this.form.submit()" 
+                                    <?php echo $isSelected ? 'checked' : ''; ?>
+                                    <?php echo $isDisabled ? 'disabled' : ''; ?>>
+                                
+                                <div style="display:flex; align-items:center;">
+                                    <i class="fas <?php echo $iconClass; ?> v-icon <?php echo $textClass; ?>"></i>
+                                    <div class="v-info">
+                                        <h6><?php echo $desc; ?></h6>
+                                        <small><?php echo $isDisabled ? "Min Spend RM " . $v['min_spend'] : $v['code']; ?></small>
+                                    </div>
+                                </div>
+                            </label>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
                 <div class="points-section">
                     <div class="points-header">
                         <span><i class="fas fa-coins text-warning"></i> Available Points:</span>
@@ -249,7 +375,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
                     <?php if ($current_points >= MIN_POINTS_THRESHOLD): ?>
                         <div class="points-toggle">
                             <input class="switch-input" type="checkbox" name="use_points" id="usePoints" value="1"
-                                onchange="this.form.submit()" <?php echo $use_points ? 'checked' : ''; ?>>
+                                onchange="this.form.submit()" 
+                                <?php echo $use_points ? 'checked' : ''; ?>
+                                <?php echo ($total_after_voucher <= 0) ? 'disabled' : ''; ?>>
                             <label class="switch-label" for="usePoints">Toggle</label>
                             <span>Redeem Points</span>
                         </div>
@@ -261,22 +389,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
                     <?php endif; ?>
                 </div>
 
-                <div class="summary-row">
+                <div class="summary-row" style="margin-top: 15px;">
                     <span>Subtotal</span>
                     <strong>RM <?php echo number_format($cart_total, 2); ?></strong>
                 </div>
-                <?php if ($discount_amount > 0): ?>
-                    <div class="summary-row discount-text">
-                        <span>Points Discount</span>
-                        <strong>- RM <?php echo number_format($discount_amount, 2); ?></strong>
+
+                <div class="summary-row">
+                    <span>Shipping Fee</span>
+                    <?php if ($shipping_fee == 0): ?>
+                        <strong style="color: #28a745;">FREE</strong>
+                    <?php else: ?>
+                        <strong>RM <?php echo number_format($shipping_fee, 2); ?></strong>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($cart_total < FREE_SHIPPING_THRESHOLD): ?>
+                    <div style="font-size: 0.85rem; color: #17a2b8; margin-top: -10px; margin-bottom: 10px; text-align: right;">
+                        <i class="fas fa-info-circle"></i> Spend <strong>RM <?php echo number_format(FREE_SHIPPING_THRESHOLD - $cart_total, 2); ?></strong> more for Free Shipping!
+                    </div>
+                <?php else: ?>
+                     <div style="font-size: 0.85rem; color: #28a745; margin-top: -10px; margin-bottom: 10px; text-align: right;">
+                        <i class="fas fa-check-circle"></i> Free Shipping Qualification Met!
                     </div>
                 <?php endif; ?>
+
+                <?php if ($voucher_discount > 0): ?>
+                    <div class="summary-row discount-text" style="color: #28a745;">
+                        <span><i class="fas fa-tag"></i> Voucher</span>
+                        <strong>- RM <?php echo number_format($voucher_discount, 2); ?></strong>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($point_discount > 0): ?>
+                    <div class="summary-row discount-text">
+                        <span><i class="fas fa-coins"></i> Points Redeem</span>
+                        <strong>- RM <?php echo number_format($point_discount, 2); ?></strong>
+                    </div>
+                <?php endif; ?>
+
                 <div class="total-row">
                     <span>Total</span>
                     <span>RM <?php echo number_format($final_total, 2); ?></span>
                 </div>
 
-                <button type="submit" name="place_order" class="btn-place-order">Place Order & Pay</button>
+                <button type="submit" name="place_order" class="btn-place-order">
+                    Place Order <?php echo ($final_total > 0) ? '& Pay' : ''; ?>
+                </button>
             </div>
         </div>
     </form>
@@ -293,12 +451,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
         function updateView() {
             const isNew = tabNew ? tabNew.checked : true;
             if (isNew) {
-                if (sectionSaved) sectionSaved.style.display = 'none';
-                if (sectionNew) sectionNew.style.display = 'block';
+                if(sectionSaved) sectionSaved.style.display = 'none';
+                if(sectionNew) sectionNew.style.display = 'block';
                 newFields.forEach(field => field.setAttribute('required', 'required'));
             } else {
-                if (sectionSaved) sectionSaved.style.display = 'block';
-                if (sectionNew) sectionNew.style.display = 'none';
+                if(sectionSaved) sectionSaved.style.display = 'block';
+                if(sectionNew) sectionNew.style.display = 'none';
                 newFields.forEach(field => field.removeAttribute('required'));
             }
         }

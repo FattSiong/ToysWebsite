@@ -55,21 +55,22 @@ if (is_post() && post('action') == 'update_profile') {
     }
 
     // 3. Handle Photo Upload
-    // Logic: Keep old photo filename by default. If new upload, replace it.
     $photo = $user['profile_photo'];
     $f = get_file('photo');
     if ($f) {
-        // Ensure directory exists
-        if (!file_exists('images/profiles')) {
-            mkdir('images/profiles', 0777, true);
+        // Ensure directory exists (Changed to uploads/profile)
+        if (!file_exists('uploads/profiles')) {
+            mkdir('uploads/profiles', 0777, true);
         }
-        // Remove old photo if it exists to save space
-        if ($user['profile_photo'] && file_exists("images/profiles/$user[profile_photo]")) {
-            unlink("images/profiles/$user[profile_photo]");
+        
+        // Remove old photo from the NEW location if it exists
+        // (Note: If you have old photos in 'images/profiles', you might want to manually move them or check both)
+        if ($user['profile_photo'] && file_exists("uploads/profiles/$user[profile_photo]")) {
+            unlink("uploads/profiles/$user[profile_photo]");
         }
-        // Save new photo and get the generated filename (e.g., '65a1b2c3.jpg')
-        // The path will be saved to the database as just the filename.
-        $photo = save_photo($f, 'images/profiles');
+        
+        // Save new photo to 'uploads/profile'
+        $photo = save_photo($f, 'uploads/profiles');
     }
 
     if (!$_err) {
@@ -102,7 +103,10 @@ if (is_post() && post('action') == 'change_password') {
     $confirm_pass = req('confirm_password');
 
     if (!password_verify($current_pass, $user['password_hash'])) $_err['current_password'] = 'Incorrect current password';
-    if (strlen($new_pass) < 6) $_err['new_password'] = 'Password must be at least 6 chars';
+    // Validate New Password
+    if ($error = check_password($new_password)) {
+        $_err['new_password'] = $error;
+    }
     if ($new_pass !== $confirm_pass) $_err['confirm_password'] = 'Passwords do not match';
 
     if (!$_err) {
@@ -247,9 +251,12 @@ if ($user['role'] !== 'admin') {
 
                 <div class="profile-img-container">
                     <?php
-                    $img_path = "images/profiles/no_profile_image.jpg";
-                    if (!empty($user['profile_photo']) && file_exists("images/profiles/" . $user['profile_photo'])) {
-                        $img_path = "images/profiles/" . $user['profile_photo'];
+                    // Default image stays in images/profiles/ as it is a static asset
+                    $img_path = "uploads/profiles/no_profile_image.jpg";
+                    
+                    // Check if the user has a custom photo in the NEW location
+                    if (!empty($user['profile_photo']) && file_exists("uploads/profiles/" . $user['profile_photo'])) {
+                        $img_path = "uploads/profiles/" . $user['profile_photo'];
                     }
                     ?>
                     <img src="<?= $img_path ?>" alt="Profile" class="profile-img">
@@ -281,18 +288,29 @@ if ($user['role'] !== 'admin') {
                 <input type="hidden" name="action" value="change_password">
                 <div class="form-group">
                     <label>Current Password</label>
-                    <?php html_password('current_password');
-                    err('current_password'); ?>
+                    <div class="password-wrapper">
+                        <input type="password" id="current_password" name="current_password" class="form-control">
+                        <i class="fas icon-eye-slash toggle-password" data-target="current_password"></i>
+                    </div>
+                    <span class="error"><?= err('current_password') ?></span>
                 </div>
+
                 <div class="form-group">
                     <label>New Password</label>
-                    <?php html_password('new_password');
-                    err('new_password'); ?>
+                    <div class="password-wrapper">
+                        <input type="password" id="new_password" name="new_password" class="form-control">
+                        <i class="fas icon-eye-slash toggle-password" data-target="new_password"></i>
+                    </div>
+                    <span class="error"><?= err('new_password') ?></span>
                 </div>
+
                 <div class="form-group">
-                    <label>Confirm Password</label>
-                    <?php html_password('confirm_password');
-                    err('confirm_password'); ?>
+                    <label>Confirm New Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control">
+                        <i class="fas fa-eye toggle-password" data-target="confirm_password"></i>
+                    </div>
+                    <span class="error"><?= err('confirm_password') ?></span>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Update Password</button>
             </form>
@@ -383,10 +401,10 @@ if ($user['role'] !== 'admin') {
                                                                         err('addr_phone'); ?></div>
 
                 <button class="btn btn-primary btn-block"><?= $edit_mode ? 'Save Changes' : 'Save Address' ?></button>
-                    
-                    <?php if ($edit_mode): ?>
-                        <a href="profile.php" class="btn btn-primary btn-block btn-cancel">Cancel Edit</a>
-                    <?php endif; ?>
+
+                <?php if ($edit_mode): ?>
+                    <a href="profile.php" class="btn btn-primary btn-block btn-cancel">Cancel Edit</a>
+                <?php endif; ?>
             </form>
         </div>
 

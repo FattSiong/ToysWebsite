@@ -55,6 +55,7 @@ if ($is_logged_in && isset($pdo)) {
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="<?= $base_path ?>js/sidebar.js" defer></script>
+    <script src="<?= $base_path ?>js/password_toggle.js"></script>
 </head>
 
 <body>
@@ -97,9 +98,16 @@ if ($is_logged_in && isset($pdo)) {
                     </li>
                     <li>
                         <a href="<?= $base_path ?>admin/order_list.php" class="<?= $current_page == 'order_list.php' ? 'active' : '' ?>">
-                            <i class="icon fas fa-shopping-cart"></i> Orders
+                            <i class="icon fas fa-clipboard-list"></i> Orders
                         </a>
                     </li>
+                    
+                    <li>
+                        <a href="<?= $base_path ?>admin/manage_vouchers.php" class="<?= $current_page == 'manage_vouchers.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-ticket-alt"></i> Manage Vouchers
+                        </a>
+                    </li>
+
                     <li>
                         <a href="<?= $base_path ?>admin/member_list.php" class="<?= $current_page == 'member_list.php' ? 'active' : '' ?>">
                             <i class="icon fas fa-users"></i> Members
@@ -129,9 +137,16 @@ if ($is_logged_in && isset($pdo)) {
                             <i class="icon fas fa-coins"></i> My Points
                         </a>
                     </li>
+
+                    <li>
+                        <a href="<?= $base_path ?>member/vouchers.php" class="<?= $current_page == 'vouchers.php' ? 'active' : '' ?>">
+                            <i class="icon fas fa-ticket-alt"></i> My Vouchers
+                        </a>
+                    </li>
+
                     <li>
                         <a href="<?= $base_path ?>member/orders.php" class="<?= $current_page == 'orders.php' ? 'active' : '' ?>">
-                            <i class="icon fas fa-box-open"></i> My Orders
+                            <i class="icon fas fa-clipboard-list"></i> My Orders
                         </a>
                     </li>
 
@@ -175,15 +190,6 @@ if ($is_logged_in && isset($pdo)) {
                 </a>
             </div>
 
-            <?php if ($role !== 'admin' && $role !== 'manager'): ?>
-                <div class="search-bar">
-                    <form action="<?= $base_path ?>index.php" method="GET">
-                        <input type="text" name="search" placeholder="Search toys...">
-                        <button type="submit"><i class="icon fas fa-search"></i></button>
-                    </form>
-                </div>
-            <?php endif; ?>
-
             <nav>
                 <ul class="nav-links">
                     <?php if ($is_logged_in && $role !== 'admin' && $role !== 'manager'): ?>
@@ -196,7 +202,6 @@ if ($is_logged_in && isset($pdo)) {
                     <?php endif; ?>
 
                     <?php if ($is_logged_in): ?>
-                        <li><a href="<?= $base_path ?>profile.php"><i class="icon fas fa-user"></i></a></li>
                     <?php else: ?>
                         <li><a href="<?= $base_path ?>login.php">Login</a></li>
                     <?php endif; ?>

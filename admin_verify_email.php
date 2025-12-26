@@ -131,7 +131,7 @@ if (is_post()) {
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Verify Email</button>
             </form>
-            
+
             <form method="post" style="margin-top: 15px;">
                 <input type="hidden" name="action" value="change_email">
                 <button type="submit" class="btn btn-primary btn-block" style="background-color: #6c757d; color: white; border: none;">
@@ -139,7 +139,7 @@ if (is_post()) {
                 </button>
             </form>
         <?php endif; ?>
-        
+
         <div class="auth-footer">
             <a href="logout.php">Cancel Setup & Logout</a>
         </div>
