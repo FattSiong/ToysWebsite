@@ -1,13 +1,12 @@
 <?php
 require_once '../vendor/autoload.php';
-require_once '../includes/db.php'; // Ensure DB connection is included
+require_once '../includes/db.php'; 
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 $stripeSecretKey = 'sk_test_51SeuhSEicrNwy8rsAMacjNRNiv1UvST0Tlpfo9CCmD7dZFuQZBJGx7dmC5WFPiugMkCvTmvlimnKB6Fps8AkhNAv00VUXMtoc8';
 \Stripe\Stripe::setApiKey($stripeSecretKey);
 
-// Check if we have the necessary data
 if (!isset($_GET['session_id']) || !isset($_SESSION['pending_order'])) {
     echo "<script>window.location.href='../index.php';</script>";
     exit;
@@ -21,7 +20,6 @@ $order_id = 0;
 $payment_success = false;
 
 try {
-    // 1. Verify Stripe Session
     $session = \Stripe\Checkout\Session::retrieve($session_id);
 
     if ($session->payment_status == 'paid') {
@@ -45,12 +43,10 @@ try {
         }
 
         // --- B. CALCULATE POINTS EARNED ---
-        // Earn 1 point per RM 1 paid (based on final total)
         $amount_paid = $orderData['final_total'];
         $points_earned_now = floor($amount_paid);
 
         // --- C. INSERT ORDER ---
-        // Note: We insert 'Processing' immediately since it's paid
         $orderSql = "INSERT INTO orders (user_id, shipping_address_id, total_amount, order_status, points_redeemed, point_discount, points_earned) VALUES (?, ?, ?, 'Pending', ?, ?, ?)";
         $pdo->prepare($orderSql)->execute([
             $user_id, 
@@ -64,18 +60,14 @@ try {
 
         // --- D. INSERT ORDER ITEMS & DEDUCT STOCK ---
         foreach ($orderData['cart_items'] as $item) {
-            // 1. Save Item
             $oiSql = "INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)";
             $pdo->prepare($oiSql)->execute([$order_id, $item['product_id'], $item['quantity'], $item['price']]);
 
-            // 2. Deduct Stock (Your Logic)
             $deductSql = "UPDATE products SET stock_quantity = stock_quantity - ? WHERE product_id = ?";
             $pdo->prepare($deductSql)->execute([$item['quantity'], $item['product_id']]);
         }
 
         // --- E. HANDLE POINTS (Deduct Used & Add Earned) ---
-        
-        // 1. Deduct Redeemed Points (If any)
         if ($orderData['points_to_redeem'] > 0) {
             $pdo->prepare("UPDATE users SET current_points = current_points - ? WHERE user_id = ?")
                 ->execute([$orderData['points_to_redeem'], $user_id]);
@@ -84,7 +76,6 @@ try {
                 ->execute([$user_id, $order_id, -$orderData['points_to_redeem']]);
         }
 
-        // 2. Add Earned Points
         if ($points_earned_now > 0) {
             $pdo->prepare("UPDATE users SET current_points = current_points + ? WHERE user_id = ?")
                 ->execute([$points_earned_now, $user_id]);
@@ -104,11 +95,9 @@ try {
 
         $pdo->commit();
 
-        // Clear Session Data (Important!)
         unset($_SESSION['pending_order']);
 
     } else {
-        // Payment failed or incomplete
         $payment_success = false;
     }
 
@@ -134,27 +123,17 @@ include '../includes/header.php';
             <span class="order-ref">Order #<?php echo $order_id; ?></span>
             
             <br>
-            <?php 
-                // Add 'zero-points' class if points are 0
-                $badgeClass = ($points_earned_now == 0) ? 'points-badge zero-points' : 'points-badge'; 
-            ?>
-            <div class="<?php echo $badgeClass; ?>">
+            <div class="<?php echo ($points_earned_now == 0) ? 'points-badge zero-points' : 'points-badge'; ?>">
                 <i class="fas fa-coins"></i>
                 <span>You earned <strong><?php echo $points_earned_now; ?></strong> points!</span>
             </div>
             
             <div class="action-buttons">
-                <a href="orders.php" class="btn-home">
-                    View Order History
-                </a>
-
+                <a href="orders.php" class="btn-home">View Order History</a>
                 <a href="receipt.php?order_id=<?php echo $order_id; ?>" target="_blank" class="btn-receipt">
                     <i class="fas fa-file-pdf"></i> Download Receipt
                 </a>
-                
-                <a href="../index.php" class="link-back">
-                    &larr; Back to Shop
-                </a>
+                <a href="../index.php" class="link-back">&larr; Back to Shop</a>
             </div>
         </div>
 
@@ -165,9 +144,7 @@ include '../includes/header.php';
             <h1 class="success-title">Payment Failed</h1>
             <p class="success-message">We could not verify your payment.</p>
             <div class="action-buttons">
-                <a href="cart.php" class="btn-home" style="background-color: #dc3545; box-shadow: 0 4px 6px rgba(220, 53, 69, 0.3);">
-                    Return to Cart
-                </a>
+                <a href="cart.php" class="btn-home" style="background-color: #dc3545;">Return to Cart</a>
             </div>
         </div>
 

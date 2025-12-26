@@ -2,13 +2,13 @@
 require_once '../includes/db.php';
 
 if (!isset($_GET['id'])) {
-    echo "Invalid Request";
+    echo "<div class='error-box'>Invalid Request</div>";
     exit;
 }
 
 $order_id = intval($_GET['id']);
 
-// Fetch Order, User, Address, Payment
+// 1. Fetch Order Data
 $sql = "SELECT o.*, u.username, u.email, u.phone_number as user_phone,
                sa.receiver_name, sa.line1, sa.line2, sa.city, sa.state, sa.postcode, sa.phone as shipping_phone,
                p_pay.payment_method, p_pay.payment_date, p_pay.status as payment_status, p_pay.transaction_id
@@ -26,7 +26,7 @@ if (!$order) {
     exit;
 }
 
-// Fetch Items
+// 2. Fetch Items
 $item_sql = "SELECT oi.*, p.name, c.name as category_name,
              (SELECT file_path FROM product_media pm WHERE pm.product_id = p.product_id AND pm.is_primary = 1 LIMIT 1) as image
              FROM order_items oi 
@@ -38,7 +38,7 @@ $item_stmt = $pdo->prepare($item_sql);
 $item_stmt->execute([$order_id]);
 $items = $item_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Progress Logic
+// 3. Progress Logic
 $status = $order['order_status'];
 $progress_width = 0;
 if ($status == 'Processing') $progress_width = 33;
@@ -56,70 +56,65 @@ function isStepActive($current_status, $step_name)
 <div class="order-details-wrapper">
     <div class="order-status-track">
         <div class="status-header">
-            <div>
+            <div class="status-header-left">
                 <span class="status-label">Current Status</span>
                 <span class="current-status-text"><?= htmlspecialchars($status) ?></span>
             </div>
-            
-            <?php if ($status == 'Pending'): ?>
-                <form method="POST" action="order_list.php" class="status-update-form" style="display:inline;">
-                    <input type="hidden" name="action" value="update_status">
-                    <input type="hidden" name="order_id" value="<?= $order['order_id'] ?>">
-                    <input type="hidden" name="new_status" value="Processing">
-                    <button type="submit" class="btn-primary">Mark as Processing</button>
-                </form>
-            <?php elseif ($status == 'Processing'): ?>
-                <form method="POST" action="order_list.php" class="status-update-form" style="display:inline;">
-                    <input type="hidden" name="action" value="update_status">
-                    <input type="hidden" name="order_id" value="<?= $order['order_id'] ?>">
-                    <input type="hidden" name="new_status" value="Shipped">
-                    <button type="submit" class="btn-primary">Mark as Shipped</button>
-                </form>
-            <?php elseif ($status == 'Shipped'): ?>
-                <form method="POST" action="order_list.php" class="status-update-form" style="display:inline;">
-                    <input type="hidden" name="action" value="update_status">
-                    <input type="hidden" name="order_id" value="<?= $order['order_id'] ?>">
-                    <input type="hidden" name="new_status" value="Delivered">
-                    <button type="submit" class="btn-primary">Mark as Delivered</button>
-                </form>
-            <?php endif; ?>
+
+            <div class="status-actions">
+                <?php if ($status == 'Pending'): ?>
+                    <form method="POST" action="order_list.php" class="status-update-form">
+                        <input type="hidden" name="action" value="update_status">
+                        <input type="hidden" name="order_id" value="<?= $order['order_id'] ?>">
+                        <input type="hidden" name="new_status" value="Processing">
+                        <button type="submit" class="btn-primary">Mark as Processing</button>
+                    </form>
+                <?php elseif ($status == 'Processing'): ?>
+                    <form method="POST" action="order_list.php" class="status-update-form">
+                        <input type="hidden" name="action" value="update_status">
+                        <input type="hidden" name="order_id" value="<?= $order['order_id'] ?>">
+                        <input type="hidden" name="new_status" value="Shipped">
+                        <button type="submit" class="btn-primary">Mark as Shipped</button>
+                    </form>
+                <?php elseif ($status == 'Shipped'): ?>
+                    <form method="POST" action="order_list.php" class="status-update-form">
+                        <input type="hidden" name="action" value="update_status">
+                        <input type="hidden" name="order_id" value="<?= $order['order_id'] ?>">
+                        <input type="hidden" name="new_status" value="Delivered">
+                        <button type="submit" class="btn-primary">Mark as Delivered</button>
+                    </form>
+                <?php endif; ?>
+            </div>
         </div>
 
         <?php if (!in_array($status, ['Cancelled', 'Refunded', 'Refund Requested', 'Refund Rejected'])): ?>
             <div class="track-steps">
                 <div class="track-progress-bar" style="width: <?= $progress_width ?>%;"></div>
 
-                <div class="step <?= isStepActive($status, 'Pending') ? 'active' : '' ?>">
-                    <div class="step-icon"><i class="icon fa-circle-check"></i></div>
-                    <div class="step-text">Order Placed</div>
-                    <div class="step-date"><?= date('M d, Y', strtotime($order['order_date'])) ?></div>
-                </div>
-
-                <div class="step <?= isStepActive($status, 'Processing') ? 'active' : '' ?>">
-                    <div class="step-icon"><i class="icon fa-circle-check"></i></div>
-                    <div class="step-text">Processing</div>
-                </div>
-
-                <div class="step <?= isStepActive($status, 'Shipped') ? 'active' : '' ?>">
-                    <div class="step-icon"><i class="icon fa-circle-check"></i></div>
-                    <div class="step-text">Shipped</div>
-                </div>
-
-                <div class="step <?= isStepActive($status, 'Delivered') ? 'active' : '' ?>">
-                    <div class="step-icon"><i class="icon fa-circle-check"></i></div>
-                    <div class="step-text">Delivered</div>
-                </div>
+                <?php
+                $steps = ['Pending' => 'Order Placed', 'Processing' => 'Processing', 'Shipped' => 'Shipped', 'Delivered' => 'Delivered'];
+                foreach ($steps as $key => $label):
+                    $active = isStepActive($status, $key) ? 'active' : '';
+                ?>
+                    <div class="step <?= $active ?>">
+                        <div class="step-icon"><i class="icon fa fa-check"></i></div>
+                        <div class="step-text"><?= $label ?></div>
+                        <?php if ($key == 'Pending'): ?>
+                            <div class="step-date"><?= date('M d, Y', strtotime($order['order_date'])) ?></div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             </div>
         <?php else: ?>
             <div class="error-box" style="margin-bottom:0;">
-                This order is marked as <strong><?= htmlspecialchars($status) ?></strong>.
+                Order stopped. Status: <strong><?= htmlspecialchars($status) ?></strong>.
             </div>
         <?php endif; ?>
     </div>
 
     <div class="info-grid-row">
         <div class="info-card">
-            <h4 class="info-card-title"><i class="icon fa fa-user"></i> Customer Information</h4>
+            <h4 class="info-card-title"><i class="icon fa fa-user"></i> Customer</h4>
             <div class="info-row">
                 <div class="info-label">Name</div>
                 <div class="info-value"><?= htmlspecialchars($order['username']) ?></div>
@@ -134,7 +129,7 @@ function isStepActive($current_status, $step_name)
             </div>
         </div>
         <div class="info-card">
-            <h4 class="info-card-title"><i class="icon fa-location-dot"></i> Shipping Information</h4>
+            <h4 class="info-card-title"><i class="icon fa fa-map-marker-alt"></i> Shipping</h4>
             <div class="info-row">
                 <div class="info-label">Receiver</div>
                 <div class="info-value"><?= htmlspecialchars($order['receiver_name']) ?></div>
@@ -155,19 +150,19 @@ function isStepActive($current_status, $step_name)
     </div>
 
     <div class="info-card" style="margin-bottom: 24px;">
-        <h4 class="info-card-title"><i class="icon fa-credit-card"></i> Payment Information</h4>
+        <h4 class="info-card-title"><i class="icon fa fa-credit-card"></i> Payment Information</h4>
         <div class="payment-grid">
             <div class="info-row">
-                <div class="info-label">Payment Method</div>
+                <div class="info-label">Method</div>
                 <div class="info-value"><?= htmlspecialchars($order['payment_method'] ?? 'N/A') ?></div>
             </div>
             <div class="info-row">
-                <div class="info-label">Payment Date</div>
+                <div class="info-label">Date</div>
                 <div class="info-value"><?= !empty($order['payment_date']) ? date('M d, Y', strtotime($order['payment_date'])) : '-' ?></div>
             </div>
             <div class="info-row">
-                <div class="info-label">Payment Status</div>
-                <div class="info-value" style="color: green; font-weight:500;"><?= htmlspecialchars($order['payment_status'] ?? 'Pending') ?></div>
+                <div class="info-label">Status</div>
+                <div class="info-value" style="color: green;"><?= htmlspecialchars($order['payment_status'] ?? 'Pending') ?></div>
             </div>
             <div class="info-row">
                 <div class="info-label">Transaction ID</div>
@@ -177,7 +172,7 @@ function isStepActive($current_status, $step_name)
     </div>
 
     <div class="info-card">
-        <h4 class="info-card-title"><i class="icon fa-box"></i> Order Items</h4>
+        <h4 class="info-card-title"><i class="icon fa fa-box"></i> Order Items</h4>
         <div class="modal-item-list">
             <?php foreach ($items as $item): ?>
                 <div class="modal-item">
@@ -187,11 +182,12 @@ function isStepActive($current_status, $step_name)
                         <span class="item-name"><?= htmlspecialchars($item['name']) ?></span>
                         <span class="item-meta"><?= htmlspecialchars($item['category_name'] ?? 'General') ?></span>
                     </div>
-                    <div class="item-qty">Qty: <?= $item['quantity'] ?></div>
+                    <div class="item-qty">x<?= $item['quantity'] ?></div>
                     <div class="item-price">$<?= number_format($item['price_at_purchase'], 2) ?></div>
                 </div>
             <?php endforeach; ?>
         </div>
+
         <div class="summary-section">
             <div class="summary-row"><span>Subtotal</span><span>$<?= number_format($order['total_amount'] + $order['point_discount'], 2) ?></span></div>
             <?php if ($order['point_discount'] > 0): ?>

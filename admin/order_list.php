@@ -3,7 +3,11 @@
 session_start();
 require_once '../includes/db.php';
 
-// --- 1. HANDLE STATUS UPDATE (AJAX/POST) ---
+// =========================================
+// 1. HANDLE REQUESTS (POST/AJAX)
+// =========================================
+
+// Handle Status Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
     $order_id = intval($_POST['order_id']);
     $new_status = $_POST['new_status'];
@@ -24,8 +28,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $stmt = $pdo->prepare("UPDATE orders SET order_status = ? WHERE order_id = ?");
             $stmt->execute([$new_status, $order_id]);
 
+            // Fetch fresh statistics for AJAX response
+            $stats_sql = "SELECT 
+                            COUNT(*) as total,
+                            SUM(CASE WHEN order_status = 'Pending' THEN 1 ELSE 0 END) as pending,
+                            SUM(CASE WHEN order_status = 'Processing' THEN 1 ELSE 0 END) as processing,
+                            SUM(CASE WHEN order_status = 'Shipped' THEN 1 ELSE 0 END) as shipped,
+                            SUM(CASE WHEN order_status = 'Delivered' THEN 1 ELSE 0 END) as delivered,
+                            SUM(CASE WHEN order_status = 'Completed' THEN 1 ELSE 0 END) as completed,
+                            SUM(CASE WHEN order_status IN ('Cancelled', 'Refund Requested', 'Refund Rejected', 'Refunded') THEN 1 ELSE 0 END) as cancel_refund
+                          FROM orders";
+            $new_stats = $pdo->query($stats_sql)->fetch(PDO::FETCH_ASSOC);
+
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-                echo json_encode(['success' => true]);
+                echo json_encode(['success' => true, 'stats' => $new_stats]);
                 exit;
             }
         } catch (PDOException $e) {
@@ -35,12 +51,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
         }
     }
-    // Redirect back to preserve filters
+    // Fallback redirect
     header("Location: order_list.php?status=" . ($_GET['status'] ?? 'All'));
     exit;
 }
 
-// --- 2. GET ORDER STATISTICS ---
+// =========================================
+// 2. FETCH DATA FOR VIEW
+// =========================================
+
+// Fetch Order Statistics (For top cards)
 $stats_sql = "SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN order_status = 'Pending' THEN 1 ELSE 0 END) as pending,
@@ -52,7 +72,7 @@ $stats_sql = "SELECT
               FROM orders";
 $stats = $pdo->query($stats_sql)->fetch(PDO::FETCH_ASSOC);
 
-// --- 3. PREPARE FILTERS, SORTING & PAGINATION ---
+// Prepare Filters & Pagination
 $current_tab = $_GET['status'] ?? 'All';
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
 $sort_option = $_GET['sort'] ?? '';
@@ -64,6 +84,7 @@ $base_sql = " FROM orders o JOIN users u ON o.user_id = u.user_id";
 $where_clause = " WHERE 1=1";
 $params = [];
 
+// Apply Status Filter
 if ($current_tab !== 'All') {
     if ($current_tab === 'Cancel/Refund') {
         $where_clause .= " AND o.order_status IN ('Cancelled', 'Refund Requested', 'Refund Rejected', 'Refunded')";
@@ -73,6 +94,7 @@ if ($current_tab !== 'All') {
     }
 }
 
+// Apply Search Filter
 if (!empty($search_query)) {
     $where_clause .= " AND (o.order_id LIKE :search_id OR u.username LIKE :search_user OR u.email LIKE :search_email)";
     $params[':search_id'] = "%$search_query%";
@@ -87,7 +109,7 @@ $stmt_count->execute($params);
 $total_records = $stmt_count->fetchColumn();
 $total_pages = ceil($total_records / $limit);
 
-// Sorting
+// Sorting Logic
 $order_by = "o.order_date DESC";
 switch ($sort_option) {
     case 'id_asc':
@@ -153,6 +175,30 @@ function getStatusColor($status)
     }
 }
 
+// Sort Helper
+function getSortParams($colName, $currentSort)
+{
+    $params = $_GET;
+    $icon = 'fa-sort';
+    $activeClass = '';
+    $nextSort = $colName . '_desc'; // default
+
+    // Toggle logic
+    if ($currentSort === $colName . '_desc') {
+        $nextSort = $colName . '_asc';
+        $icon = 'fa-sort-desc';
+        $activeClass = 'active';
+    } elseif ($currentSort === $colName . '_asc') {
+        $nextSort = $colName . '_desc';
+        $icon = 'fa-sort-asc';
+        $activeClass = 'active';
+    }
+
+    $params['sort'] = $nextSort;
+    $params['page'] = 1;
+    return ['url' => '?' . http_build_query($params), 'icon' => $icon, 'class' => $activeClass];
+}
+
 include '../includes/header.php';
 ?>
 
@@ -160,36 +206,39 @@ include '../includes/header.php';
 
 <div class="page-header">
     <h1 class="page-title">Orders Management</h1>
+    <a href="refund_requests.php" class="btn-danger-solid">
+        <i class="icon fa-file-lines"></i> Refund Requests
+    </a>
 </div>
 
 <div class="stats-grid">
     <div class="stat-card">
         <span class="stat-label">Total Orders</span>
-        <span class="stat-value"><?= number_format($stats['total']) ?></span>
+        <span class="stat-value" id="stat-total"><?= number_format($stats['total']) ?></span>
     </div>
     <div class="stat-card">
-        <span class="stat-label" style="color: #ef6c00;">Pending</span>
-        <span class="stat-value"><?= number_format($stats['pending']) ?></span>
+        <span class="stat-label c-pending">Pending</span>
+        <span class="stat-value" id="stat-pending"><?= number_format($stats['pending']) ?></span>
     </div>
     <div class="stat-card">
-        <span class="stat-label" style="color: #1565c0;">Processing</span>
-        <span class="stat-value"><?= number_format($stats['processing']) ?></span>
+        <span class="stat-label c-processing">Processing</span>
+        <span class="stat-value" id="stat-processing"><?= number_format($stats['processing']) ?></span>
     </div>
     <div class="stat-card">
-        <span class="stat-label" style="color: #1565c0;">Shipped</span>
-        <span class="stat-value"><?= number_format($stats['shipped']) ?></span>
+        <span class="stat-label c-shipped">Shipped</span>
+        <span class="stat-value" id="stat-shipped"><?= number_format($stats['shipped']) ?></span>
     </div>
     <div class="stat-card">
-        <span class="stat-label" style="color: #2e7d32;">Delivered</span>
-        <span class="stat-value"><?= number_format($stats['delivered']) ?></span>
+        <span class="stat-label c-delivered">Delivered</span>
+        <span class="stat-value" id="stat-delivered"><?= number_format($stats['delivered']) ?></span>
     </div>
     <div class="stat-card">
-        <span class="stat-label" style="color: #4caf50;">Completed</span>
-        <span class="stat-value"><?= number_format($stats['completed']) ?></span>
+        <span class="stat-label c-completed">Completed</span>
+        <span class="stat-value" id="stat-completed"><?= number_format($stats['completed']) ?></span>
     </div>
     <div class="stat-card">
-        <span class="stat-label" style="color: #c62828;">Cancel/Refund</span>
-        <span class="stat-value"><?= number_format($stats['cancel_refund']) ?></span>
+        <span class="stat-label c-cancel">Cancel/Refund</span>
+        <span class="stat-value" id="stat-cancel-refund"><?= number_format($stats['cancel_refund']) ?></span>
     </div>
 </div>
 
@@ -211,7 +260,7 @@ include '../includes/header.php';
 
         <div class="filter-group search-group">
             <button type="submit" class="search-submit-btn"><i class="icon fa-search"></i></button>
-            <input type="text" name="search" class="form-input search-input-field" placeholder="Search Order" value="<?= htmlspecialchars($search_query) ?>">
+            <input type="text" name="search" class="form-input search-input-field" placeholder="Search Order ID, Name, Email" value="<?= htmlspecialchars($search_query) ?>">
             <?php if (!empty($search_query)): ?>
                 <a href="?status=<?= htmlspecialchars($current_tab) ?>" class="clear-search-btn"><i class="icon fa-close"></i></a>
             <?php endif; ?>
@@ -221,17 +270,7 @@ include '../includes/header.php';
             <select name="status" class="form-select" onchange="this.form.submit()">
                 <option value="All">All Status</option>
                 <?php
-                $status_options = [
-                    'Pending',
-                    'Processing',
-                    'Shipped',
-                    'Delivered',
-                    'Completed',
-                    'Cancelled',
-                    'Refund Requested',
-                    'Refund Rejected',
-                    'Refunded'
-                ];
+                $status_options = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Completed', 'Cancelled', 'Refund Requested', 'Refund Rejected', 'Refunded'];
                 foreach ($status_options as $opt):
                 ?>
                     <option value="<?= $opt ?>" <?= $current_tab == $opt ? 'selected' : '' ?>><?= $opt ?></option>
@@ -253,84 +292,17 @@ include '../includes/header.php';
                 <option value="total_asc" <?= $sort_option == 'total_asc' ? 'selected' : '' ?>>Total (Low-High)</option>
             </select>
         </div>
-
-        <a href="refund_requests.php" class="btn-danger-solid" style="margin-left: 10px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; height: 38px; padding: 0 15px;">
-            <i class="icon fa-file-lines"></i> Refund Requests
-        </a>
     </form>
 </div>
 
 <table class="data-table">
     <thead>
         <?php
-        function getSortParams($colName, $currentSort)
-        {
-            $params = $_GET;
-            $icon = 'fa-sort';
-            $activeClass = '';
-            $nextSort = '';
-
-            if ($colName === 'id') {
-                if ($currentSort === 'id_desc') {
-                    $nextSort = 'id_asc';
-                    $icon = 'fa-sort-desc';
-                    $activeClass = 'active';
-                } elseif ($currentSort === 'id_asc') {
-                    $nextSort = 'id_desc';
-                    $icon = 'fa-sort-asc';
-                    $activeClass = 'active';
-                } else {
-                    $nextSort = 'id_desc';
-                }
-            } elseif ($colName === 'date') {
-                if ($currentSort === 'date_desc') {
-                    $nextSort = 'date_asc';
-                    $icon = 'fa-sort-desc';
-                    $activeClass = 'active';
-                } elseif ($currentSort === 'date_asc') {
-                    $nextSort = 'date_desc';
-                    $icon = 'fa-sort-asc';
-                    $activeClass = 'active';
-                } else {
-                    $nextSort = 'date_desc';
-                }
-            } elseif ($colName === 'items') {
-                if ($currentSort === 'item_desc') {
-                    $nextSort = 'item_asc';
-                    $icon = 'fa-sort-desc';
-                    $activeClass = 'active';
-                } elseif ($currentSort === 'item_asc') {
-                    $nextSort = 'item_desc';
-                    $icon = 'fa-sort-asc';
-                    $activeClass = 'active';
-                } else {
-                    $nextSort = 'item_desc';
-                }
-            } elseif ($colName === 'total') {
-                if ($currentSort === 'total_desc') {
-                    $nextSort = 'total_asc';
-                    $icon = 'fa-sort-desc';
-                    $activeClass = 'active';
-                } elseif ($currentSort === 'total_asc') {
-                    $nextSort = 'total_desc';
-                    $icon = 'fa-sort-asc';
-                    $activeClass = 'active';
-                } else {
-                    $nextSort = 'total_desc';
-                }
-            }
-
-            $params['sort'] = $nextSort;
-            $params['page'] = 1;
-            return ['url' => '?' . http_build_query($params), 'icon' => $icon, 'class' => $activeClass];
-        }
-
         $sortId = getSortParams('id', $sort_option);
         $sortDate = getSortParams('date', $sort_option);
-        $sortItems = getSortParams('items', $sort_option);
+        $sortItems = getSortParams('item', $sort_option);
         $sortTotal = getSortParams('total', $sort_option);
         ?>
-
         <tr>
             <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
             <th><a href="<?= $sortId['url'] ?>" class="sortable-link <?= $sortId['class'] ?>">Order ID <i class="icon fa <?= $sortId['icon'] ?>"></i></a></th>

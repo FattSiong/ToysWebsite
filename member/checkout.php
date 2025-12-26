@@ -11,6 +11,8 @@ const MIN_POINTS_THRESHOLD = 50;
 $stripeSecretKey = 'sk_test_51SeuhSEicrNwy8rsAMacjNRNiv1UvST0Tlpfo9CCmD7dZFuQZBJGx7dmC5WFPiugMkCvTmvlimnKB6Fps8AkhNAv00VUXMtoc8';
 \Stripe\Stripe::setApiKey($stripeSecretKey);
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+
 if (!isset($_SESSION['user_id'])) {
     echo "<script>window.location.href='../login.php';</script>";
     exit;
@@ -42,7 +44,7 @@ if (empty($cart_items)) {
     exit;
 }
 
-// 3. POINTS LOGIC
+// 3. POINTS LOGIC (Original)
 $use_points = isset($_POST['use_points']);
 $discount_amount = 0;
 $points_to_redeem = 0;
@@ -60,26 +62,24 @@ if ($use_points && $current_points >= MIN_POINTS_THRESHOLD) {
 $final_total = $cart_total - $discount_amount;
 
 // =========================================================
-// 4. PROCESS "PLACE ORDER" (MODIFIED LOGIC)
+// 4. PROCESS "PLACE ORDER"
 // =========================================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
     try {
-        // --- STEP A: SAVE DATA TO SESSION (DO NOT WRITE TO DB YET) ---
-
+        // --- STEP A: SAVE DATA TO SESSION ---
         $orderData = [
             'user_id' => $user_id,
             'address_mode' => $_POST['address_mode'],
             'points_to_redeem' => $points_to_redeem,
             'discount_amount'  => $discount_amount,
             'final_total'      => $final_total,
-            'cart_items'       => $cart_items // We save cart state just in case
+            'cart_items'       => $cart_items
         ];
 
         // Handle Address Data
         if ($_POST['address_mode'] === 'saved' && !empty($_POST['selected_address_id'])) {
             $orderData['shipping_id'] = $_POST['selected_address_id'];
         } else {
-            // Store New Address Fields to insert later
             $orderData['new_address'] = [
                 'recipient_name' => $_POST['receiver_name'],
                 'line1' => $_POST['address_line1'],
@@ -92,16 +92,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             ];
         }
 
-        // Save to Session
         $_SESSION['pending_order'] = $orderData;
 
-        // --- STEP B: CREATE STRIPE SESSION ---
-        $domain = "http://localhost:8001/member"; // Adjust to your actual path
+        // --- STEP B: CREATE STRIPE SESSION (WITH 404 FIX) ---
+        // Dynamic URL detection
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $domainName = $_SERVER['HTTP_HOST'];
+        $path = str_replace('\\', '/', dirname($_SERVER['PHP_SELF'])); 
+        $domain = $protocol . $domainName . $path;
 
         $line_items_stripe = [[
             'price_data' => [
                 'currency' => 'myr',
-                'product_data' => ['name' => 'ToysWebsite Order'], // Generic name since we are aggregating total
+                'product_data' => ['name' => 'ToysWebsite Order'],
                 'unit_amount' => round($final_total * 100),
             ],
             'quantity' => 1,
@@ -111,12 +114,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             'payment_method_types' => ['card'],
             'line_items' => $line_items_stripe,
             'mode' => 'payment',
-            // Pass session_id to success page to verify
-            'success_url' => $domain . '/success.php?session_id={CHECKOUT_SESSION_ID}&order_id=' . $order_id,
+            'success_url' => $domain . '/success.php?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => $domain . '/checkout.php?error=cancelled',
         ]);
 
-        header("HTTP/1.1 303 See Other");
         header("Location: " . $checkout_session->url);
         exit;
     } catch (Exception $e) {
@@ -285,15 +286,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
     document.addEventListener("DOMContentLoaded", function() {
         const tabSaved = document.getElementById('tab-saved');
         const tabNew = document.getElementById('tab-new');
-
         const sectionSaved = document.getElementById('section-saved');
         const sectionNew = document.getElementById('section-new');
-
         const newFields = document.querySelectorAll('.new-addr-field');
 
         function updateView() {
             const isNew = tabNew ? tabNew.checked : true;
-
             if (isNew) {
                 if (sectionSaved) sectionSaved.style.display = 'none';
                 if (sectionNew) sectionNew.style.display = 'block';
@@ -304,10 +302,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
                 newFields.forEach(field => field.removeAttribute('required'));
             }
         }
-
         if (tabSaved) tabSaved.addEventListener('change', updateView);
         if (tabNew) tabNew.addEventListener('change', updateView);
-
         updateView();
     });
 </script>

@@ -199,3 +199,42 @@
         position: static; /* Remove sticky on mobile */
     }
 }
+
+.alert-info {
+    background-color: #f8f9fa; /* Light gray background */
+    border: 1px solid #e9ecef;
+    color: #495057;
+    padding: 3rem 1rem; /* Vertical spacing */
+    border-radius: 8px;
+    margin-top: 20px;
+    text-align: center;
+    
+    /* This fixes the overlap by stacking items vertically */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; /* Space between text and button */
+}
+
+.alert-info h4 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+/* Style the Go Shopping button specifically */
+.alert-info .btn-primary {
+    background-color: #007bff;
+    color: white;
+    padding: 12px 25px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    display: inline-block;
+}
+
+.alert-info .btn-primary:hover {
+    background-color: #0056b3;
+}
