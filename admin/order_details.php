@@ -33,6 +33,7 @@ $item_sql = "SELECT oi.*, p.name, c.name as category_name,
              JOIN products p ON oi.product_id = p.product_id
              LEFT JOIN product_categories pc ON p.product_id = pc.product_id
              LEFT JOIN categories c ON pc.category_id = c.category_id
+             JOIN orders o ON oi.order_id = o.order_id
              WHERE oi.order_id = ?";
 $item_stmt = $pdo->prepare($item_sql);
 $item_stmt->execute([$order_id]);
@@ -43,12 +44,11 @@ $status = $order['order_status'];
 $progress_width = 0;
 if ($status == 'Processing') $progress_width = 33;
 elseif ($status == 'Shipped') $progress_width = 66;
-elseif ($status == 'Delivered') $progress_width = 100;
 elseif ($status == 'Completed') $progress_width = 100;
 
 function isStepActive($current_status, $step_name)
 {
-    $order_flow = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Completed'];
+    $order_flow = ['Pending', 'Processing', 'Shipped', 'Completed'];
     return array_search($current_status, $order_flow) >= array_search($step_name, $order_flow);
 }
 ?>
@@ -77,12 +77,7 @@ function isStepActive($current_status, $step_name)
                         <button type="submit" class="btn-primary">Mark as Shipped</button>
                     </form>
                 <?php elseif ($status == 'Shipped'): ?>
-                    <form method="POST" action="order_list.php" class="status-update-form">
-                        <input type="hidden" name="action" value="update_status">
-                        <input type="hidden" name="order_id" value="<?= $order['order_id'] ?>">
-                        <input type="hidden" name="new_status" value="Delivered">
-                        <button type="submit" class="btn-primary">Mark as Delivered</button>
-                    </form>
+                    <span style="color: #666; font-size: 0.9em;">Waiting for customer confirmation</span>
                 <?php endif; ?>
             </div>
         </div>
@@ -92,7 +87,7 @@ function isStepActive($current_status, $step_name)
                 <div class="track-progress-bar" style="width: <?= $progress_width ?>%;"></div>
 
                 <?php
-                $steps = ['Pending' => 'Order Placed', 'Processing' => 'Processing', 'Shipped' => 'Shipped', 'Delivered' => 'Delivered'];
+                $steps = ['Pending' => 'Order Placed', 'Processing' => 'Processing', 'Shipped' => 'Shipped', 'Completed' => 'Completed'];
                 foreach ($steps as $key => $label):
                     $active = isStepActive($status, $key) ? 'active' : '';
                 ?>
