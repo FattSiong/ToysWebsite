@@ -301,3 +301,103 @@ tr:hover {
     border-color: #adb5bd;
     text-decoration: none;
 }
+
+/* --- No Orders Empty State --- */
+.no-orders-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+    margin-top: 20px;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.no-orders-icon {
+    font-size: 5rem;
+    color: #e9ecef; /* Light grey for a subtle look */
+    margin-bottom: 25px;
+}
+
+.no-orders-state h3 {
+    font-size: 1.5rem;
+    color: #343a40;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.no-orders-state p {
+    color: #6c757d;
+    font-size: 1rem;
+    margin: 0 auto 30px auto;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+.no-orders-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* Optional: Slight hover effect for the icon */
+.no-orders-state:hover .no-orders-icon {
+    color: #dee2e6;
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+}
+
+/* --- Simple Empty State (Matches Cart Style) --- */
+.alert-info {
+    background-color: #f8f9fa; /* Light gray background */
+    border: 1px solid #e9ecef;
+    color: #495057;
+    padding: 3rem 1rem;
+    border-radius: 8px;
+    margin-top: 20px;
+    text-align: center;
+    
+    /* Flexbox for centering and spacing */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.alert-info h4 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.alert-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Button overrides for inside the alert to match cart look */
+.alert-info .btn-primary {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.alert-info .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.alert-info .btn-primary:hover { background-color: #0056b3; }
+.alert-info .btn-secondary:hover { background-color: #545b62; }

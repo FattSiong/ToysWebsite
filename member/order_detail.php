@@ -131,7 +131,7 @@ if ($status == 'Cancelled') {
 } elseif ($is_refunded) {
     $step = 4; $label_step4 = "Refunded"; $icon_step4 = "fa-undo"; $class_step4 = "step-danger";
 } elseif ($is_requested) {
-    $step = 4; $label_step4 = "Refund Requested"; $icon_step4 = "fa-hourglass-half"; $class_step4 = "step-warning";
+    $step = 4; $label_step4 = "Refund Requested"; $icon_step4 = "fa-clock"; $class_step4 = "step-warning";
 } else {
     // Standard Flow
     if (stripos($status, 'Processing') !== false) $step = 2;
