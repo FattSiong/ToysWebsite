@@ -205,10 +205,7 @@ include '../includes/header.php';
 <link rel="stylesheet" href="../css/order_details.css">
 
 <div class="page-header">
-    <h1 class="page-title">Orders Management</h1>
-    <a href="refund_requests.php" class="btn-danger-solid">
-        <i class="icon fa-file-lines"></i> Refund Requests
-    </a>
+    <h1 class="page-title">Orders</h1>
 </div>
 
 <div class="stats-grid">
@@ -260,7 +257,7 @@ include '../includes/header.php';
 
         <div class="filter-group search-group">
             <button type="submit" class="search-submit-btn"><i class="icon fa-search"></i></button>
-            <input type="text" name="search" class="form-input search-input-field" placeholder="Search Order ID, Name, Email" value="<?= htmlspecialchars($search_query) ?>">
+            <input type="text" name="search" class="form-input search-input-field" placeholder="Search Order" value="<?= htmlspecialchars($search_query) ?>">
             <?php if (!empty($search_query)): ?>
                 <a href="?status=<?= htmlspecialchars($current_tab) ?>" class="clear-search-btn"><i class="icon fa-close"></i></a>
             <?php endif; ?>
@@ -292,6 +289,10 @@ include '../includes/header.php';
                 <option value="total_asc" <?= $sort_option == 'total_asc' ? 'selected' : '' ?>>Total (Low-High)</option>
             </select>
         </div>
+
+        <a href="refund_requests.php" class="btn-danger-solid">
+            <i class="icon fa-file-lines"></i> Refund Requests
+        </a>
     </form>
 </div>
 

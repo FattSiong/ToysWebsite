@@ -129,7 +129,7 @@ function isStepActive($current_status, $step_name)
             </div>
         </div>
         <div class="info-card">
-            <h4 class="info-card-title"><i class="icon fa fa-map-marker-alt"></i> Shipping</h4>
+            <h4 class="info-card-title"><i class="icon fa fa-location-dot"></i> Shipping</h4>
             <div class="info-row">
                 <div class="info-label">Receiver</div>
                 <div class="info-value"><?= htmlspecialchars($order['receiver_name']) ?></div>

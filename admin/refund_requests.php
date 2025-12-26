@@ -2,8 +2,13 @@
 session_start();
 require_once '../includes/db.php';
 
+// ==========================================
+// 1. INITIALIZATION
+// ==========================================
+$page_title           = 'Refund Requests';
+
 // =========================================
-// 1. HANDLE POST ACTIONS
+// 2. HANDLE POST ACTIONS
 // =========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $order_id = intval($_POST['order_id']);
@@ -66,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // =========================================
-// 2. FETCH DATA
+// 3. FETCH DATA
 // =========================================
 
 // Stats
@@ -112,11 +117,9 @@ include '../includes/header.php';
 
 <link rel="stylesheet" href="../css/order_details.css">
 
-<div class="page-header">
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <a href="order_list.php" class="back-link" style="margin-bottom:0;"><i class="icon fa fa-arrow-left"></i></a>
-        <h1 class="page-title">Refund Requests</h1>
-    </div>
+<div class="form-page-header">
+    <a href="order_list.php" class="back-link"><i class="icon fa-arrow-left"></i> Back</a>
+    <h1 class="page-title"><?= htmlspecialchars($page_title) ?></h1>
 </div>
 
 <div class="refund-stats-grid">
@@ -140,7 +143,7 @@ include '../includes/header.php';
 
 <div class="filter-bar">
     <form action="" method="GET" class="filter-form">
-        <div class="filter-group search-group">
+        <div class="filter-group search-group" style="flex: 1;">
             <button type="submit" class="search-submit-btn"><i class="icon fa-search"></i></button>
             <input type="text" name="search" class="form-input search-input-field" placeholder="Search by Order ID, Name, Email..." value="<?= htmlspecialchars($search_query) ?>">
 
@@ -186,12 +189,12 @@ include '../includes/header.php';
                         <form method="POST" onsubmit="return confirm('Approve this refund? Order will be marked Refunded and items restocked.');">
                             <input type="hidden" name="order_id" value="<?= $row['order_id'] ?>">
                             <input type="hidden" name="action" value="approve">
-                            <button type="submit" class="btn-approve"><i class="fa fa-check"></i> Approve</button>
+                            <button type="submit" class="btn-approve"><i class="icon fa-check"></i> Approve</button>
                         </form>
                         <form method="POST" onsubmit="return confirm('Reject this refund?');">
                             <input type="hidden" name="order_id" value="<?= $row['order_id'] ?>">
                             <input type="hidden" name="action" value="reject">
-                            <button type="submit" class="btn-reject"><i class="fa fa-times"></i> Reject</button>
+                            <button type="submit" class="btn-reject"><i class="icon fa-times"></i> Reject</button>
                         </form>
                     </div>
                 <?php endif; ?>
