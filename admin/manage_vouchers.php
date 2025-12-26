@@ -3,7 +3,7 @@ session_start();
 require_once '../includes/db.php';
 
 // Access Control
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] == 'member') {
     header("Location: ../login.php");
     exit;
 }

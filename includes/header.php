@@ -98,7 +98,7 @@ if ($is_logged_in && isset($pdo)) {
                     </li>
                     <li>
                         <a href="<?= $base_path ?>admin/order_list.php" class="<?= $current_page == 'order_list.php' ? 'active' : '' ?>">
-                            <i class="icon fas fa-shopping-cart"></i> Orders
+                            <i class="icon fas fa-clipboard-list"></i> Orders
                         </a>
                     </li>
                     
@@ -146,7 +146,7 @@ if ($is_logged_in && isset($pdo)) {
 
                     <li>
                         <a href="<?= $base_path ?>member/orders.php" class="<?= $current_page == 'orders.php' ? 'active' : '' ?>">
-                            <i class="icon fas fa-box-open"></i> My Orders
+                            <i class="icon fas fa-clipboard-list"></i> My Orders
                         </a>
                     </li>
 

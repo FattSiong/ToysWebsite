@@ -73,7 +73,7 @@ $transactions = $stmtTrans->fetchAll();
                                 <?php endif; ?>
                             </td>
                             <td style="text-align:right;">
-                                <?php 
+                                <?php
                                     $amount = $t['amount'];
                                     $class = $amount >= 0 ? 'amount-plus' : 'amount-minus';
                                     $sign = $amount > 0 ? '+' : '';
