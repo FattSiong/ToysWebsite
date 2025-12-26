@@ -190,15 +190,6 @@ if ($is_logged_in && isset($pdo)) {
                 </a>
             </div>
 
-            <?php if ($role !== 'admin' && $role !== 'manager'): ?>
-                <div class="search-bar">
-                    <form action="<?= $base_path ?>index.php" method="GET">
-                        <input type="text" name="search" placeholder="Search toys...">
-                        <button type="submit"><i class="icon fas fa-search"></i></button>
-                    </form>
-                </div>
-            <?php endif; ?>
-
             <nav>
                 <ul class="nav-links">
                     <?php if ($is_logged_in && $role !== 'admin' && $role !== 'manager'): ?>
@@ -211,7 +202,6 @@ if ($is_logged_in && isset($pdo)) {
                     <?php endif; ?>
 
                     <?php if ($is_logged_in): ?>
-                        <li><a href="<?= $base_path ?>profile.php"><i class="icon fas fa-user"></i></a></li>
                     <?php else: ?>
                         <li><a href="<?= $base_path ?>login.php">Login</a></li>
                     <?php endif; ?>

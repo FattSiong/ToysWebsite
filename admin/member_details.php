@@ -82,13 +82,28 @@ if ($user_id) {
 }
 
 // Helper: Profile Pic Logic
-$profile_pic = 'https://ui-avatars.com/api/?name=User&background=random';
-if ($user) {
-    if (!empty($user['profile_photo'])) {
-        $profile_pic = '../uploads/' . $user['profile_photo'];
-    } else {
-        $profile_pic = 'https://ui-avatars.com/api/?name=' . urlencode($user['username']) . '&background=random';
+
+// 2. Define the local default image path
+$default_local_image = '../uploads/profiles/no_profile_image.jpg';
+
+// 3. Check if the local default image exists. If yes, prefer it over UI Avatars.
+if (file_exists($default_local_image)) {
+    $profile_picture = $default_local_image;
+}
+
+// 4. Now, check if the user has a custom photo uploaded
+if ($user && !empty($user['profile_photo'])) {
+    $photo_name = $user['profile_photo'];
+    
+    // Check the 'uploads/profiles' folder
+    if (file_exists('../uploads/profiles/' . $photo_name)) {
+        $profile_picture = '../uploads/profiles/' . $photo_name;
+    } 
+    // Check the legacy 'images/profiles' folder
+    else if (file_exists('../images/profiles/' . $photo_name)) {
+        $profile_picture = '../images/profiles/' . $photo_name;
     }
+    // If the user's file is missing in both places, $profile_picture remains the default image set in steps 1-3.
 }
 
 include '../includes/header.php';
@@ -111,7 +126,7 @@ include '../includes/header.php';
 
         <div class="profile-card">
             <div class="profile-main">
-                <img src="<?= htmlspecialchars($profile_pic) ?>" alt="Profile" class="profile-avatar">
+                <img src="<?= $profile_picture ?>" alt="Profile" class="profile-avatar">
                 <div class="profile-text">
                     <h1 class="user-name"><?= htmlspecialchars($user['username']) ?></h1>
                     <span class="user-role badge-role"><?= ucfirst($user['role']) ?></span>

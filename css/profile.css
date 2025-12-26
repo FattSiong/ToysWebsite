@@ -432,28 +432,28 @@
     border: 1px solid #dee2e6;
 }
 
-/* --- Reuse Password Toggle Styles for Profile --- */
+/* Password Toggle Wrapper */
 .password-wrapper {
     position: relative;
     width: 100%;
-    margin-bottom: 15px;
 }
 
 .password-wrapper input {
     width: 100%;
-    padding-right: 40px !important;
-    box-sizing: border-box;
+    padding-right: 40px; /* Space for the eye icon */
 }
 
+/* The Eye Icon */
 .toggle-password {
     position: absolute;
-    top: 35px; /* Adjust based on your label height */
-    right: 15px;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
     cursor: pointer;
     color: #888;
+    z-index: 10;
 }
 
-/* Adjust top position if label is not part of the flow or different layout */
-.form-group {
-    position: relative; 
+.toggle-password:hover {
+    color: #333;
 }
