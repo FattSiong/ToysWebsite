@@ -152,26 +152,6 @@ $items = $stmtI->fetchAll();
 ?>
 
 <link rel="stylesheet" href="../css/tracking.css">
-<style>
-    .step-warning .icon { color: #ffc107 !important; }
-    .step-warning .text { color: #d39e00 !important; font-weight: bold; }
-    
-    /* Order Received Button Style */
-    .btn-received {
-        background-color: #28a745;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .btn-received:hover { background-color: #218838; }
-</style>
 
 <div class="container">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">

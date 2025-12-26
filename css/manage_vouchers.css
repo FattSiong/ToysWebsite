@@ -1,0 +1,97 @@
+/* css/manage_vouchers.css */
+
+/* --- Alerts --- */
+.alert-box {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid transparent;
+}
+.alert-box.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+.alert-box.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+/* --- Form Layout --- */
+.voucher-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.input-icon-wrapper {
+    position: relative;
+}
+.input-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    pointer-events: none;
+}
+
+.req {
+    color: #dc3545;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+}
+
+/* --- Table Styling Enhancements --- */
+.voucher-badge {
+    background-color: #f0f0f5;
+    color: #333;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 4px 8px;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+.text-muted {
+    color: #999;
+    font-style: italic;
+}
+
+/* Status Pills */
+.status-pill {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.status-active {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+}
+.status-expired {
+    background-color: #fbeaea;
+    color: #bd2130;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .voucher-form-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    .button-group label {
+        display: none; /* Hide label on mobile for button */
+    }
+}

@@ -141,9 +141,12 @@ if (is_post()) {
             </div>
 
             <div class="form-group">
-                <label for="password">Password <span>*</span></label>
-                <?php html_password('password'); ?>
-                <?php err('password'); ?>
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" name="password" id="password" class="form-control">
+                    <i class="fas icon-eye-slash toggle-password"></i>
+                </div>
+                <span class="error"><?= $_err['password'] ?? '' ?></span>
             </div>
 
             <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">

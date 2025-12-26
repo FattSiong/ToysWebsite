@@ -431,3 +431,29 @@
     border-radius: 8px;
     border: 1px solid #dee2e6;
 }
+
+/* Password Toggle Wrapper */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px; /* Space for the eye icon */
+}
+
+/* The Eye Icon */
+.toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
+    z-index: 10;
+}
+
+.toggle-password:hover {
+    color: #333;
+}

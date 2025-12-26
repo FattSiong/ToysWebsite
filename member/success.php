@@ -4,6 +4,7 @@ require_once '../includes/db.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+// Config Stripe
 $stripeSecretKey = 'sk_test_51SeuhSEicrNwy8rsAMacjNRNiv1UvST0Tlpfo9CCmD7dZFuQZBJGx7dmC5WFPiugMkCvTmvlimnKB6Fps8AkhNAv00VUXMtoc8';
 \Stripe\Stripe::setApiKey($stripeSecretKey);
 
@@ -20,10 +21,22 @@ $order_id = 0;
 $payment_success = false;
 
 try {
-    $session = \Stripe\Checkout\Session::retrieve($session_id);
+    // 1. Verify Payment
+    $isFreeOrder = ($session_id === 'free_order_bypass' && $orderData['final_total'] <= 0);
+    $stripe_txn_id = null;
 
-    if ($session->payment_status == 'paid') {
+    if ($isFreeOrder) {
         $payment_success = true;
+        $stripe_txn_id = "FREE-" . uniqid();
+    } else {
+        $session = \Stripe\Checkout\Session::retrieve($session_id);
+        if ($session->payment_status == 'paid') {
+            $payment_success = true;
+            $stripe_txn_id = $session->payment_intent;
+        }
+    }
+
+    if ($payment_success) {
         
         // BEGIN TRANSACTION
         $pdo->beginTransaction();
@@ -46,14 +59,30 @@ try {
         $amount_paid = $orderData['final_total'];
         $points_earned_now = floor($amount_paid);
 
-        // --- C. INSERT ORDER ---
-        $orderSql = "INSERT INTO orders (user_id, shipping_address_id, total_amount, order_status, points_redeemed, point_discount, points_earned) VALUES (?, ?, ?, 'Pending', ?, ?, ?)";
+        // --- C. INSERT ORDER (WITH SHIPPING FEE) ---
+        $voucher_usage_id = isset($orderData['voucher_usage_id']) ? $orderData['voucher_usage_id'] : null;
+        $shipping_fee = isset($orderData['shipping_fee']) ? $orderData['shipping_fee'] : 0.00; // <--- GET SHIPPING FEE
+
+        $orderSql = "INSERT INTO orders (
+            user_id, 
+            shipping_address_id, 
+            voucher_usage_id, 
+            total_amount, 
+            shipping_fee, 
+            order_status, 
+            points_redeemed, 
+            point_discount, 
+            points_earned
+        ) VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?, ?)"; // <--- Added one more ? for shipping_fee
+        
         $pdo->prepare($orderSql)->execute([
             $user_id, 
-            $shipping_id, 
+            $shipping_id,
+            $voucher_usage_id,
             $amount_paid, 
+            $shipping_fee, // <--- INSERT SHIPPING FEE
             $orderData['points_to_redeem'], 
-            $orderData['discount_amount'],
+            $orderData['point_discount'],
             $points_earned_now
         ]);
         $order_id = $pdo->lastInsertId();
@@ -67,7 +96,13 @@ try {
             $pdo->prepare($deductSql)->execute([$item['quantity'], $item['product_id']]);
         }
 
-        // --- E. HANDLE POINTS (Deduct Used & Add Earned) ---
+        // --- E. HANDLE VOUCHER STATUS ---
+        if ($voucher_usage_id) {
+            $vUpd = "UPDATE voucher_usage SET is_used = 1, used_at = NOW() WHERE id = ?";
+            $pdo->prepare($vUpd)->execute([$voucher_usage_id]);
+        }
+
+        // --- F. HANDLE POINTS (Deduct Used & Add Earned) ---
         if ($orderData['points_to_redeem'] > 0) {
             $pdo->prepare("UPDATE users SET current_points = current_points - ? WHERE user_id = ?")
                 ->execute([$orderData['points_to_redeem'], $user_id]);
@@ -84,17 +119,15 @@ try {
                 ->execute([$user_id, $order_id, $points_earned_now]);
         }
 
-        // --- F. RECORD PAYMENT ---
-        $txn_id = $session->payment_intent; 
+        // --- G. RECORD PAYMENT ---
         $paySql = "INSERT INTO payments (order_id, payment_method, amount, status, transaction_id) VALUES (?, 'Stripe', ?, 'Completed', ?)";
-        $pdo->prepare($paySql)->execute([$order_id, $amount_paid, $txn_id]);
+        $pdo->prepare($paySql)->execute([$order_id, $amount_paid, $stripe_txn_id]);
 
-        // --- G. CLEAR CART ---
+        // --- H. CLEAR CART ---
         $pdo->prepare("DELETE FROM cart_items WHERE cart_id = (SELECT cart_id FROM cart WHERE user_id = ?)")
             ->execute([$user_id]);
 
         $pdo->commit();
-
         unset($_SESSION['pending_order']);
 
     } else {
@@ -123,16 +156,21 @@ include '../includes/header.php';
             <span class="order-ref">Order #<?php echo $order_id; ?></span>
             
             <br>
-            <div class="<?php echo ($points_earned_now == 0) ? 'points-badge zero-points' : 'points-badge'; ?>">
+            <?php 
+                $badgeClass = ($points_earned_now == 0) ? 'points-badge zero-points' : 'points-badge'; 
+            ?>
+            <div class="<?php echo $badgeClass; ?>">
                 <i class="fas fa-coins"></i>
                 <span>You earned <strong><?php echo $points_earned_now; ?></strong> points!</span>
             </div>
             
             <div class="action-buttons">
                 <a href="orders.php" class="btn-home">View Order History</a>
-                <a href="receipt.php?order_id=<?php echo $order_id; ?>" target="_blank" class="btn-receipt">
-                    <i class="fas fa-file-pdf"></i> Download Receipt
-                </a>
+                <?php if (file_exists('receipt.php')): ?>
+                    <a href="receipt.php?order_id=<?php echo $order_id; ?>" target="_blank" class="btn-receipt">
+                        <i class="fas fa-file-pdf"></i> Download Receipt
+                    </a>
+                <?php endif; ?>
                 <a href="../index.php" class="link-back">&larr; Back to Shop</a>
             </div>
         </div>
