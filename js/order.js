@@ -143,11 +143,6 @@ $(document).ready(function () {
         }
     });
 
-    // --- 5. SELECT ALL CHECKBOX ---
-    $('#selectAll').change(function() {
-        $('input[name="selected_ids[]"]').prop('checked', this.checked);
-    });
-
     // --- 6. REFUND SEARCH AUTO-SUBMIT ---
     $('#refundSearchInput').on('change', function() {
         $('#searchForm').submit();
