@@ -386,3 +386,16 @@ $password = post('password');
 $confirm_password = post('confirm_password');
 $full_name = post('full_name'); 
 $phone_number = post('phone_number');
+
+function check_password($password) {
+    if ($password == '') {
+        return 'Password is required.';
+    } 
+    if (strlen($password) < 8) {
+        return 'Password must be at least 8 characters.';
+    } 
+    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/', $password)) {
+        return 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character.';
+    }
+    return null; // No error
+}

@@ -1,7 +1,6 @@
 <?php
 require_once '../vendor/autoload.php';
 require_once '../includes/db.php'; 
-require_once '../includes/db.php'; 
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -60,25 +59,28 @@ try {
         $amount_paid = $orderData['final_total'];
         $points_earned_now = floor($amount_paid);
 
-        // --- C. INSERT ORDER (WITH VOUCHER ID) ---
+        // --- C. INSERT ORDER (WITH SHIPPING FEE) ---
         $voucher_usage_id = isset($orderData['voucher_usage_id']) ? $orderData['voucher_usage_id'] : null;
-        
+        $shipping_fee = isset($orderData['shipping_fee']) ? $orderData['shipping_fee'] : 0.00; // <--- GET SHIPPING FEE
+
         $orderSql = "INSERT INTO orders (
             user_id, 
             shipping_address_id, 
             voucher_usage_id, 
             total_amount, 
+            shipping_fee, 
             order_status, 
             points_redeemed, 
             point_discount, 
             points_earned
-        ) VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?)";
+        ) VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?, ?)"; // <--- Added one more ? for shipping_fee
         
         $pdo->prepare($orderSql)->execute([
             $user_id, 
             $shipping_id,
             $voucher_usage_id,
             $amount_paid, 
+            $shipping_fee, // <--- INSERT SHIPPING FEE
             $orderData['points_to_redeem'], 
             $orderData['point_discount'],
             $points_earned_now

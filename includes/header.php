@@ -55,6 +55,7 @@ if ($is_logged_in && isset($pdo)) {
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="<?= $base_path ?>js/sidebar.js" defer></script>
+    <script src="<?= $base_path ?>js/password_toggle.js"></script>
 </head>
 
 <body>

@@ -18,10 +18,8 @@ if (is_post()) {
         $_err['email'] = 'Email already registered';
     }
 
-    if ($password == '') {
-        $_err['password'] = 'Password is required';
-    } elseif (strlen($password) < 6) {
-        $_err['password'] = 'Min 6 characters';
+    if ($error = check_password($password)) {
+        $_err['password'] = $error;
     }
 
     if ($confirm_password == '') {
@@ -101,15 +99,21 @@ if (is_post()) {
             </div>
 
             <div class="form-group">
-                <label for="password">Password <span>*</span></label>
-                <?php html_password('password'); ?>
-                <?php err('password'); ?>
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" name="password" id="password" class="form-control" value="<?= encode($password ?? '') ?>">
+                    <i class="fas icon-eye-slash toggle-password" data-target="password"></i>
+                </div>
+                <span class="error"><?= err('password') ?></span>
             </div>
 
             <div class="form-group">
-                <label for="confirm_password">Confirm Password <span>*</span></label>
-                <?php html_password('confirm_password'); ?>
-                <?php err('confirm_password'); ?>
+                <label for="confirm_password">Confirm Password</label>
+                <div class="password-wrapper">
+                    <input type="password" name="confirm_password" id="confirm_password" class="form-control" value="<?= encode($confirm_password ?? '') ?>">
+                    <i class="fas icon-eye-slash toggle-password" data-target="confirm_password"></i>
+                </div>
+                <span class="error"><?= err('confirm_password') ?></span>
             </div>
 
             <button type="submit" class="btn btn-primary">Send Verification Code</button>
