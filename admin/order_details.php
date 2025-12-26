@@ -11,11 +11,14 @@ $order_id = intval($_GET['id']);
 // 1. Fetch Order Data
 $sql = "SELECT o.*, u.username, u.email, u.phone_number as user_phone,
                sa.receiver_name, sa.line1, sa.line2, sa.city, sa.state, sa.postcode, sa.phone as shipping_phone,
-               p_pay.payment_method, p_pay.payment_date, p_pay.status as payment_status, p_pay.transaction_id
+               p_pay.payment_method, p_pay.payment_date, p_pay.status as payment_status, p_pay.transaction_id,
+               v.code as voucher_code
         FROM orders o 
         JOIN users u ON o.user_id = u.user_id
         JOIN shipping_addresses sa ON o.shipping_address_id = sa.shipping_address_id
         LEFT JOIN payments p_pay ON o.order_id = p_pay.order_id
+        LEFT JOIN voucher_usage vu ON o.voucher_usage_id = vu.id
+        LEFT JOIN vouchers v ON vu.voucher_id = v.voucher_id
         WHERE o.order_id = ?";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$order_id]);
@@ -51,6 +54,21 @@ function isStepActive($current_status, $step_name)
     $order_flow = ['Pending', 'Processing', 'Shipped', 'Completed'];
     return array_search($current_status, $order_flow) >= array_search($step_name, $order_flow);
 }
+
+// 4. Calculate Financials
+$subtotal = 0;
+foreach ($items as $item) {
+    $subtotal += $item['price_at_purchase'] * $item['quantity'];
+}
+
+$shipping_fee = $order['shipping_fee'];
+$point_discount = $order['point_discount'];
+$total_amount = $order['total_amount'];
+
+// Calculate Voucher Discount: (Subtotal + Shipping) - Points - Total
+$voucher_discount = ($subtotal + $shipping_fee) - $point_discount - $total_amount;
+// Fix potential small floating point precision issues
+if ($voucher_discount < 0) $voucher_discount = 0;
 ?>
 
 <div class="order-details-wrapper">
@@ -184,12 +202,22 @@ function isStepActive($current_status, $step_name)
         </div>
 
         <div class="summary-section">
-            <div class="summary-row"><span>Subtotal</span><span>$<?= number_format($order['total_amount'] + $order['point_discount'], 2) ?></span></div>
-            <?php if ($order['point_discount'] > 0): ?>
-                <div class="summary-row"><span>Discount (Points)</span><span style="color: #d60000;">-$<?= number_format($order['point_discount'], 2) ?></span></div>
+            <div class="summary-row"><span>Subtotal</span><span>$<?= number_format($subtotal, 2) ?></span></div>
+            
+            <div class="summary-row"><span>Shipping</span><span>$<?= number_format($shipping_fee, 2) ?></span></div>
+            
+            <?php if ($voucher_discount > 0.001): ?>
+                <div class="summary-row">
+                    <span>Voucher Discount (<?= htmlspecialchars($order['voucher_code'] ?? 'Applied') ?>)</span>
+                    <span style="color: #d60000;">-$<?= number_format($voucher_discount, 2) ?></span>
+                </div>
             <?php endif; ?>
-            <div class="summary-row"><span>Shipping</span><span>$0.00</span></div>
-            <div class="summary-row total"><span>Total</span><span>$<?= number_format($order['total_amount'], 2) ?></span></div>
+
+            <?php if ($point_discount > 0): ?>
+                <div class="summary-row"><span>Point Discount</span><span style="color: #d60000;">-$<?= number_format($point_discount, 2) ?></span></div>
+            <?php endif; ?>
+            
+            <div class="summary-row total"><span>Total</span><span>$<?= number_format($total_amount, 2) ?></span></div>
         </div>
     </div>
 </div>
