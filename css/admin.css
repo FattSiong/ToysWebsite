@@ -133,6 +133,32 @@ a {
     text-decoration: underline;
 }
 
+/* Solid Red Button - Matched size to Sort Dropdown */
+.btn-danger-solid {
+    background-color: #d60000;
+    color: white;
+    padding: 10px 16px; 
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid #d60000; 
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.btn-danger-solid:hover {
+    background-color: #a80000;
+    border-color: #a80000;
+    color: white;
+}
+
 .btn-outline {
     background-color: white;
     color: #0071e3;

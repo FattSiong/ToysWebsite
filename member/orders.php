@@ -160,7 +160,6 @@ $orders = $stmt->fetchAll();
                         <option value="pending" <?php echo ($f_status == 'pending') ? 'selected' : ''; ?>>Pending</option>
                         <option value="processing" <?php echo ($f_status == 'processing') ? 'selected' : ''; ?>>Processing</option>
                         <option value="shipped" <?php echo ($f_status == 'shipped') ? 'selected' : ''; ?>>Shipped</option>
-                        <option value="delivered" <?php echo ($f_status == 'delivered') ? 'selected' : ''; ?>>Delivered</option>
                         <option value="completed" <?php echo ($f_status == 'completed') ? 'selected' : ''; ?>>Completed</option>
                         <option value="cancelled" <?php echo ($f_status == 'cancelled') ? 'selected' : ''; ?>>Cancelled</option>
                         <option value="refunded" <?php echo ($f_status == 'refunded') ? 'selected' : ''; ?>>Refunded</option>

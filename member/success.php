@@ -1,6 +1,7 @@
 <?php
 require_once '../vendor/autoload.php';
 require_once '../includes/db.php'; 
+require_once '../includes/db.php'; 
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -8,7 +9,6 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 $stripeSecretKey = 'sk_test_51SeuhSEicrNwy8rsAMacjNRNiv1UvST0Tlpfo9CCmD7dZFuQZBJGx7dmC5WFPiugMkCvTmvlimnKB6Fps8AkhNAv00VUXMtoc8';
 \Stripe\Stripe::setApiKey($stripeSecretKey);
 
-// Check if we have the necessary data
 if (!isset($_GET['session_id']) || !isset($_SESSION['pending_order'])) {
     echo "<script>window.location.href='../index.php';</script>";
     exit;
@@ -57,7 +57,6 @@ try {
         }
 
         // --- B. CALCULATE POINTS EARNED ---
-        // Earn 1 point per RM 1 paid (based on final total)
         $amount_paid = $orderData['final_total'];
         $points_earned_now = floor($amount_paid);
 
@@ -181,9 +180,7 @@ include '../includes/header.php';
             <h1 class="success-title">Payment Failed</h1>
             <p class="success-message">We could not verify your payment.</p>
             <div class="action-buttons">
-                <a href="cart.php" class="btn-home" style="background-color: #dc3545; box-shadow: 0 4px 6px rgba(220, 53, 69, 0.3);">
-                    Return to Cart
-                </a>
+                <a href="cart.php" class="btn-home" style="background-color: #dc3545;">Return to Cart</a>
             </div>
         </div>
 

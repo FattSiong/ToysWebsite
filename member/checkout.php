@@ -13,6 +13,8 @@ const FREE_SHIPPING_THRESHOLD = 100; // <--- ADDED: Free shipping if spend > 100
 $stripeSecretKey = 'sk_test_51SeuhSEicrNwy8rsAMacjNRNiv1UvST0Tlpfo9CCmD7dZFuQZBJGx7dmC5WFPiugMkCvTmvlimnKB6Fps8AkhNAv00VUXMtoc8';
 \Stripe\Stripe::setApiKey($stripeSecretKey);
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+
 if (!isset($_SESSION['user_id'])) {
     echo "<script>window.location.href='../login.php';</script>";
     exit;
@@ -131,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             'shipping_fee'     => $shipping_fee,
             'final_total'      => $final_total,
             'cart_items'       => $cart_items
+            'cart_items'       => $cart_items
         ];
 
         // Address Handling
@@ -173,6 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             'payment_method_types' => ['card'],
             'line_items' => $line_items_stripe,
             'mode' => 'payment',
+            'success_url' => $domain . '/success.php?session_id={CHECKOUT_SESSION_ID}',
             'success_url' => $domain . '/success.php?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => $domain . '/checkout.php?error=cancelled',
         ]);
